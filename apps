@@ -1,0 +1,4170 @@
+/* ============================================================================
+   Tokens. Everything visual is here, so changing the look means editing this
+   block and nothing else. Colours come from an ice sheet: the surface, the
+   shadow on it, the dasher boards, and the painted blue and red lines.
+   ========================================================================= */
+:root {
+  --sheet:        #F2F6F9;   /* fresh ice */
+  --shadow:       #DCE6EE;   /* ice under the lights */
+  --shadow-deep:  #C3D3E0;
+  --boards:       #16222C;   /* dasher boards — the chrome */
+  --boards-soft:  #2B3B48;
+  --blueline:     #1D4E89;
+  --redline:      #C8102E;
+  --crease:       #7FB2D9;
+  --crease-wash:  #E4F0F9;
+
+  --ink:          #16222C;
+  --ink-soft:     #51626F;
+  --ink-faint:    #8698A5;
+
+  --ok:           #1B7A4B;
+  --warn:         #A4620A;
+
+  --rule:         1px solid var(--shadow-deep);
+  --rail: 208px;
+  --bar: 52px;
+
+  --t-xs: 11px; --t-sm: 12px; --t-md: 13px; --t-lg: 15px; --t-xl: 22px; --t-2xl: 30px;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  background: var(--sheet);
+  color: var(--ink);
+  font-family: Archivo, system-ui, sans-serif;
+  font-size: var(--t-md);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font: inherit; font-variant-numeric: tabular-nums; color: inherit; }
+:focus-visible { outline: 2px solid var(--blueline); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------------------------------------------------------------- shell -- */
+.app { display: grid; grid-template-rows: var(--bar) 1fr; height: 100%; }
+
+.bar {
+  display: flex; align-items: center; gap: 16px; padding: 0 16px; overflow: hidden;
+  background: var(--boards); color: var(--sheet);
+  border-bottom: 3px solid var(--redline);     /* the centre red line */
+}
+.bar .season { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar h1 {
+  margin: 0; font-size: var(--t-sm); font-weight: 800; letter-spacing: .14em;
+  color: var(--crease);
+}
+.bar .season { font-size: var(--t-lg); font-weight: 600; }
+.bar .league {
+  font-size: var(--t-xs); font-weight: 700; padding: 3px 8px;
+  background: var(--blueline); color: #fff; border-radius: 2px;
+}
+.bar .spacer { flex: 1; }
+
+.body { display: grid; grid-template-columns: var(--rail) 1fr; min-height: 0; }
+
+.rail {
+  background: var(--shadow); border-right: var(--rule);
+  display: flex; flex-direction: column; padding: 10px 0;
+}
+.rail nav { display: flex; flex-direction: column; }
+.rail button {
+  text-align: left; background: none; border: 0; cursor: pointer;
+  padding: 8px 16px; font-size: var(--t-md); font-weight: 500; color: var(--ink-soft);
+  border-left: 3px solid transparent;
+}
+.rail button:hover { color: var(--ink); background: var(--crease-wash); }
+.rail button[aria-current='true'] {
+  color: var(--ink); font-weight: 700; background: var(--sheet);
+  border-left-color: var(--blueline);
+}
+.rail .status { margin-top: auto; padding: 12px 16px; border-top: var(--rule); }
+.rail .status div { display: flex; justify-content: space-between; padding: 2px 0; font-size: var(--t-sm); }
+.rail .status .n { font-weight: 700; }
+.rail .status .err .n { color: var(--redline); }
+.rail .status .wrn .n { color: var(--warn); }
+.rail .status .ok  .n { color: var(--ok); }
+
+.main { overflow: auto; padding: 20px 24px 60px; min-width: 0; }
+.scroll-x { overflow-x: auto; }
+h2 { margin: 0 0 2px; font-size: var(--t-xl); font-weight: 700; letter-spacing: -.01em; }
+.lede { margin: 0 0 20px; color: var(--ink-soft); max-width: 68ch; line-height: 1.5; }
+
+/* ------------------------------------------------- the season strip (hero) */
+.strip { margin-bottom: 26px; }
+.strip .track { display: flex; align-items: stretch; gap: 3px; height: 108px; }
+.strip .wk { flex: 1; height: 100%; display: flex; flex-direction: column;
+  justify-content: flex-end; min-width: 0; }
+.strip .fill { background: var(--blueline); border-radius: 1px 1px 0 0; min-height: 2px; }
+.strip .fill.empty { background: var(--shadow-deep); }
+.strip .cap { background: var(--shadow); display: flex; align-items: flex-end; }
+.strip .cap > span { display: block; width: 100%; }
+.strip .axis { display: flex; gap: 3px; margin-top: 6px; }
+.strip .axis span {
+  flex: 1; font-size: 9px; color: var(--ink-faint); text-align: center;
+  overflow: hidden; white-space: nowrap;
+}
+.strip .legend { display: flex; gap: 18px; margin-top: 10px; font-size: var(--t-sm); color: var(--ink-soft); }
+.strip .legend i {
+  display: inline-block; width: 9px; height: 9px; margin-right: 6px; border-radius: 1px;
+  vertical-align: baseline;
+}
+
+/* ------------------------------------------------------------- data table */
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left; font-size: var(--t-sm); font-weight: 700; color: var(--ink-soft);
+  padding: 6px 10px 6px 0; border-bottom: 2px solid var(--blueline);  /* the blue line */
+  white-space: nowrap; position: sticky; top: 0; background: var(--sheet);
+}
+td { padding: 5px 10px 5px 0; border-bottom: var(--rule); vertical-align: middle; }
+tbody tr:hover { background: var(--crease-wash); }
+td.num, th.num { text-align: right; padding-right: 16px; }
+.muted { color: var(--ink-faint); }
+
+/* -------------------------------------------------------------- controls */
+.btn {
+  background: var(--boards); color: var(--sheet); border: 0; border-radius: 2px;
+  padding: 7px 14px; font-size: var(--t-md); font-weight: 600; cursor: pointer;
+}
+.btn:hover { background: var(--boards-soft); }
+.btn.ghost { background: transparent; color: var(--sheet); border: 1px solid var(--boards-soft); }
+.bar .btn.ghost:hover { background: var(--boards-soft); }
+.btn.line { background: transparent; color: var(--blueline); border: 1px solid var(--blueline); }
+.btn.line:hover { background: var(--crease-wash); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn.go { background: var(--blueline); }
+.btn.go:hover { background: #174173; }
+
+input[type='text'], input[type='number'], select {
+  background: #fff; border: 1px solid var(--shadow-deep); border-radius: 2px; padding: 4px 6px;
+}
+input[type='text']:focus, select:focus { border-color: var(--blueline); }
+
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label { font-size: var(--t-sm); color: var(--ink-soft); font-weight: 600; }
+
+/* ---------------------------------------------------------------- panels */
+.panel { border: var(--rule); background: #fff; padding: 14px 16px; margin-bottom: 16px; }
+.panel h3 { margin: 0 0 8px; font-size: var(--t-lg); font-weight: 700; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
+
+.stat { border-left: 3px solid var(--blueline); padding-left: 10px; }
+.stat .v { font-size: var(--t-2xl); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; }
+.stat .k { font-size: var(--t-sm); color: var(--ink-soft); }
+.stat.bad { border-left-color: var(--redline); }
+.stat.bad .v { color: var(--redline); }
+
+/* --------------------------------------------------------------- flags */
+.flag { font-size: var(--t-sm); font-weight: 600; }
+.flag.err { color: var(--redline); }
+.flag.wrn { color: var(--warn); }
+.flag.ok  { color: var(--ok); }
+.chip {
+  display: inline-block; font-size: var(--t-xs); font-weight: 700; padding: 2px 6px;
+  border-radius: 2px; background: var(--shadow); color: var(--ink-soft);
+}
+.chip.div { background: var(--crease-wash); color: var(--blueline); }
+
+.empty {
+  border: 1px dashed var(--shadow-deep); padding: 40px; text-align: center;
+  color: var(--ink-soft); max-width: 60ch;
+}
+.empty p { margin: 0 0 14px; line-height: 1.55; }
+
+/* One orchestrated moment: rows arrive when a schedule is generated. */
+@keyframes drop { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+.fresh tbody tr { animation: drop .22s ease-out backwards; }
+.fresh tbody tr:nth-child(1){animation-delay:.00s} .fresh tbody tr:nth-child(2){animation-delay:.01s}
+.fresh tbody tr:nth-child(3){animation-delay:.02s} .fresh tbody tr:nth-child(4){animation-delay:.03s}
+.fresh tbody tr:nth-child(5){animation-delay:.04s} .fresh tbody tr:nth-child(6){animation-delay:.05s}
+.fresh tbody tr:nth-child(7){animation-delay:.06s} .fresh tbody tr:nth-child(8){animation-delay:.07s}
+
+@media (max-width: 760px) {
+  .bar { gap: 8px; padding: 0 10px; }
+  .bar .season, .bar .league { display: none; }
+  .bar .btn { padding: 6px 10px; font-size: var(--t-sm); }
+  /* every other week label, so they stop colliding */
+  .strip .axis span:nth-child(even) { visibility: hidden; }
+  .body { grid-template-columns: 1fr; }
+  .rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: var(--rule); }
+  .rail nav { flex-direction: row; }
+  .rail .status { display: none; }
+  .main { padding: 16px; }
+}
+
+/* ------------------------------------------------------------ game editor */
+.editor {
+  border: var(--rule); border-left: 3px solid var(--blueline);
+  background: #fff; padding: 14px 16px; margin-bottom: 18px;
+}
+.editor-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 6px;
+}
+.editor .scroll-y { max-height: 340px; overflow-y: auto; }
+.editor .scroll-y th { top: 0; }
+tr.is-current { background: var(--crease-wash); }
+.toggle { display: flex; align-items: center; gap: 7px; font-size: var(--t-md); cursor: pointer; }
+.problems {
+  margin: 0 0 12px; padding: 8px 10px 8px 26px; list-style: disc;
+  border-left: 3px solid var(--redline); background: #fdf3f4; color: var(--ink);
+}
+.problems li { margin: 2px 0; }
+.chip.away { background: var(--crease); color: #fff; margin-left: 6px; }
+.chip.lock { background: var(--boards); color: var(--sheet); margin-left: 6px; }
+
+/* --------------------------------------------------------------- results */
+input.score {
+  width: 54px; text-align: right; background: #fff;
+  border: 1px solid var(--shadow-deep); border-radius: 2px; padding: 3px 5px;
+}
+input.score:focus { border-color: var(--blueline); }
+i.form {
+  display: inline-block; width: 18px; height: 18px; line-height: 18px; text-align: center;
+  font-style: normal; font-size: 11px; font-weight: 700; border-radius: 2px;
+  margin-right: 2px; color: #fff;
+}
+i.fW { background: var(--ok); } i.fL { background: var(--redline); } i.fT { background: var(--ink-faint); }
+
+/* ----------------------------------------------------------- start & setup */
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+.notice {
+  margin: 0 0 14px; padding: 8px 12px; background: var(--crease-wash);
+  border-left: 3px solid var(--blueline); color: var(--ink);
+}
+details.panel summary { cursor: pointer; }
+input[type='date'], input[type='time'] {
+  background: #fff; border: 1px solid var(--shadow-deep); border-radius: 2px; padding: 3px 5px;
+}
+
+/* -------------------------------------------------------------- brackets */
+.bracket { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 4px; }
+.bracket .round { flex: 1 1 0; min-width: 190px; display: flex; flex-direction: column; gap: 10px; }
+.bracket .round h4 {
+  margin: 0; font-size: var(--t-xs); font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+/* Later rounds sit centred against the round that feeds them, the way a
+   bracket is drawn on paper. */
+.bracket .round + .round { justify-content: center; }
+.tie { border: var(--rule); border-left: 3px solid var(--crease); background: #fff; }
+.tie-head {
+  display: flex; gap: 8px; justify-content: space-between; align-items: baseline;
+  padding: 5px 8px; font-size: var(--t-xs); color: var(--ink-soft);
+  border-bottom: 1px solid var(--shadow);
+}
+.tie-head .code { font-weight: 700; color: var(--blueline); letter-spacing: .04em; }
+.tie .side {
+  display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px;
+  border-bottom: 1px solid var(--shadow);
+}
+.tie .side:last-child { border-bottom: 0; }
+.tie .side.tbd .who { color: var(--ink-faint); font-style: italic; }
+.tie .side.won { background: var(--crease-wash); }
+.tie .side.won .who { font-weight: 700; }
+.tie .side .goals { font-weight: 700; min-width: 1.4em; text-align: right; }
+.tie .side .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 760px) { .bracket { display: block; } .bracket .round { min-width: 0; margin-bottom: 14px; } }
+.chip.po { background: var(--boards); color: var(--sheet); margin-left: 5px; }
+input.score:disabled { background: var(--shadow); color: var(--ink-faint); }
+
+/* ------------------------------------------------- what is on the ice */
+.chip.kind { font-weight: 700; }
+.chip.kind.game { background: var(--blueline); color: #fff; }
+.chip.kind.prac { background: var(--crease-wash); color: var(--blueline); }
+.chip.kind.eval { background: var(--warn); color: #fff; }
+.chip.kind.free { background: var(--shadow); color: var(--ink-soft); }
+.chip.kind.po   { background: var(--boards); color: var(--sheet); }
+.pill {
+  display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 2px;
+  font-size: var(--t-xs); font-weight: 700; border: 1px solid transparent; cursor: pointer;
+}
+.pill.moved { background: #FBE3E6; color: var(--redline); border-color: #F2C9CE; }
+.pill.moved:hover { background: var(--redline); color: #fff; }
+
+/* ------------------------------------------------------ ready to publish */
+.ready .bar-track {
+  height: 6px; background: var(--shadow); margin: 2px 0 14px; overflow: hidden;
+}
+.ready .bar-track .fill { display: block; height: 100%; background: var(--warn); }
+.ready .bar-track .fill.ok { background: var(--ok); }
+.ready-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.ready-col h4 {
+  margin: 0 0 6px; font-size: var(--t-xs); font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.crit { display: grid; grid-template-columns: 14px auto; gap: 0 6px; padding: 2px 0; }
+.crit i { font-style: normal; color: var(--redline); font-weight: 700; }
+.crit.met i { color: var(--ok); }
+.crit .k { font-weight: 600; }
+.crit .d { grid-column: 2; font-size: var(--t-sm); color: var(--ink-soft); }
+
+/* --------------------------------------------------------- crossover play */
+.crossers { display: flex; gap: 4px; flex-wrap: wrap; }
+.pill.cross {
+  background: #fff; color: var(--ink-soft); border-color: var(--shadow-deep);
+}
+.pill.cross:hover:not(:disabled) { border-color: var(--blueline); color: var(--blueline); }
+.pill.cross[aria-pressed='true'] {
+  background: var(--blueline); color: #fff; border-color: var(--blueline);
+}
+.pill.cross:disabled { opacity: .35; cursor: not-allowed; }
+.crossnum { display: flex; align-items: center; gap: 5px; margin-top: 5px; font-size: var(--t-sm); }
+
+/* ----------------------------------------------------------- back to top -- */
+/* Pinned to the viewport, not the scroll pane: a button that scrolls away
+   with the content it is meant to rescue you from is no use. Sits clear of
+   the rail on a desktop and centres itself on a phone, where the rail
+   becomes a row across the top. */
+.to-top {
+  position: fixed; z-index: 40;
+  right: 20px; bottom: 20px;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 13px 9px 11px;
+  border: var(--rule); border-radius: 999px;
+  background: var(--boards); color: #fff;
+  font-size: var(--t-sm); font-weight: 600; letter-spacing: .02em;
+  box-shadow: 0 2px 10px rgba(22, 34, 44, .28);
+  cursor: pointer;
+  /* Out of the way, and out of the hit-testing, until it is wanted. */
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: opacity .16s ease, transform .16s ease, background .16s ease;
+}
+.to-top.on { opacity: 1; transform: none; pointer-events: auto; }
+.to-top:hover { background: var(--boards-soft); }
+.to-top svg { display: block; }
+@media (max-width: 820px) {
+  .to-top { right: 50%; transform: translateX(50%) translateY(8px); bottom: 16px; }
+  .to-top.on { transform: translateX(50%); }
+}
+
+import { useMemo, useRef, useState } from 'react';
+import type { Season } from '@league/core';
+import { manifestFor, resolveBracket, validateSeason } from '@league/core';
+import { saveSeason } from '@league/io';
+import { download } from './lib/files';
+import { BackToTop } from './lib/BackToTop';
+import { Start } from './views/Start';
+import { Setup } from './views/Setup';
+import { Overview } from './views/Overview';
+import { Ice } from './views/Ice';
+import { Teams } from './views/Teams';
+import { Schedule } from './views/Schedule';
+import { Results } from './views/Results';
+import { Playoffs } from './views/Playoffs';
+import { Checks } from './views/Checks';
+import { Exports } from './views/Exports';
+
+const VIEWS = ['Overview', 'Setup', 'Ice', 'Teams', 'Schedule', 'Results', 'Playoffs',
+  'Checks', 'Export'] as const;
+type View = (typeof VIEWS)[number];
+
+export function App() {
+  const [season, setSeason] = useState<Season | null>(null);
+  const [view, setView] = useState<View>('Overview');
+  const [fileName, setFileName] = useState('season.json');
+  const [problem, setProblem] = useState<string | null>(null);
+  const [fresh, setFresh] = useState(false);
+  /** The pane that scrolls. Back-to-top needs it; the window does not scroll. */
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  const manifest = useMemo(() => {
+    if (!season) return null;
+    try { return manifestFor(season.leagueId); } catch { return null; }
+  }, [season]);
+  const result = useMemo(
+    () => (season && manifest ? validateSeason(season, manifest) : null), [season, manifest]);
+
+  /**
+   * Every edit goes through here, so a bracket is always consistent with the
+   * results behind it. resolveBracket is pure and returns the same object when
+   * nothing moved, so this costs nothing on an edit that is not a result.
+   */
+  function commit(s: Season) {
+    if (!manifest) { setSeason(s); return; }
+    setSeason(resolveBracket(s, manifest));
+  }
+
+  function start(s: Season, name: string) {
+    setSeason(s); setFileName(name); setProblem(null);
+    // A brand-new season has nothing to look at, so open where the work starts.
+    setView(s.slots.length ? 'Overview' : 'Setup');
+  }
+
+  return (
+    <div className="app">
+      <header className="bar">
+        <h1>MSU ARENA</h1>
+        {season ? (
+          <>
+            <span className="season">{season.name}</span>
+            <span className="league">{manifest?.name ?? season.leagueId}</span>
+          </>
+        ) : <span className="season">League operations</span>}
+        <span className="spacer" />
+        {season && (
+          <button className="btn ghost" onClick={() => {
+            if (confirm('Close this season? Anything unsaved is lost.')) {
+              setSeason(null); setView('Overview');
+            }
+          }}>Close</button>
+        )}
+        <button className="btn" onClick={() => season && download(fileName, saveSeason(season),
+          'application/json')} disabled={!season}>Save season</button>
+      </header>
+
+      <div className="body">
+        <aside className="rail">
+          <nav>
+            {VIEWS.map((v) => (
+              <button key={v} aria-current={view === v} disabled={!season}
+                onClick={() => setView(v)}>{v}</button>
+            ))}
+          </nav>
+          {result && (
+            <div className="status">
+              <div className={result.errorCount ? 'err' : 'ok'}>
+                <span>Errors</span><span className="n">{result.errorCount}</span>
+              </div>
+              <div className="wrn"><span>Warnings</span><span className="n">{result.warningCount}</span></div>
+              <div className="ok"><span>Games</span><span className="n">{season!.games.length}</span></div>
+            </div>
+          )}
+        </aside>
+
+        <main className="main" ref={mainRef}>
+          {problem && (
+            <div className="panel" style={{ borderLeft: '3px solid var(--redline)' }}>
+              <h3>That did not work</h3>
+              <p className="lede" style={{ marginBottom: 0 }}>{problem}</p>
+            </div>
+          )}
+
+          {!season ? (
+            <Start onOpen={start} onProblem={setProblem} />
+          ) : !manifest ? (
+            <>
+              <h2>This season names a league I do not know</h2>
+              <p className="lede">
+                It asks for <code>{season.leagueId}</code>. Pick a different league on Setup, or add
+                a manifest for it in <code>packages/core/src/manifest.ts</code>.
+              </p>
+            </>
+          ) : view === 'Overview' ? (
+            <Overview season={season} manifest={manifest} result={result!} />
+          ) : view === 'Setup' ? (
+            <Setup season={season} manifest={manifest} onChange={setSeason} />
+          ) : view === 'Ice' ? (
+            <Ice season={season} onChange={setSeason} />
+          ) : view === 'Teams' ? (
+            <Teams season={season} onChange={setSeason} />
+          ) : view === 'Schedule' ? (
+            <Schedule season={season} manifest={manifest}
+              onChange={(s) => { commit(s); setFresh(true); }} fresh={fresh} />
+          ) : view === 'Results' ? (
+            <Results season={season} manifest={manifest} onChange={commit} />
+          ) : view === 'Playoffs' ? (
+            <Playoffs season={season} manifest={manifest} onChange={commit} />
+          ) : view === 'Checks' ? (
+            <Checks season={season} result={result!} />
+          ) : (
+            <Exports season={season} manifest={manifest} />
+          )}
+        </main>
+        {season && <BackToTop containerRef={mainRef} />}
+      </div>
+    </div>
+  );
+}
+
+import type { Season, ValidationResult } from '@league/core';
+import { summarize } from '@league/core';
+import { names } from '../lib/names';
+
+export function Checks({ season, result }: { season: Season; result: ValidationResult }) {
+  const nameOf = names(season);
+  const errors = result.violations.filter((v) => v.severity === 'error');
+  const warnings = result.violations.filter((v) => v.severity === 'warning');
+
+  return (
+    <>
+      <h2>{result.errorCount === 0 ? 'Nothing is broken' : `${result.errorCount} problems to fix`}</h2>
+      <p className="lede">
+        {result.errorCount === 0
+          ? `Every rule in this league's manifest holds. ${result.warningCount} warnings are worth a look but will not stop you publishing.`
+          : 'Errors break a rule the league has set. Fix these before the schedule goes out.'}
+      </p>
+
+      <div className="panel">
+        <h3>Per team</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Team</th><th>Division</th><th className="num">Games</th><th className="num">Practices</th>
+              <th className="num">Morning</th><th className="num">Midday</th><th className="num">Evening</th>
+              <th className="num">Run</th><th>Flag</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.teams.map((t) => (
+              <tr key={t.teamId}>
+                <td>{t.teamName}</td>
+                <td><span className="chip div">{nameOf.division(t.divisionId)}</span></td>
+                <td className="num">
+                  <span className={t.games === t.gamesTarget ? '' : 'flag wrn'}>
+                    {t.games}/{t.gamesTarget}
+                  </span>
+                </td>
+                <td className="num">
+                  {t.practicesTarget === 0 && t.practices === 0
+                    ? <span className="muted">—</span>
+                    : <span className={t.practices === t.practicesTarget ? '' : 'flag wrn'}>
+                        {t.practices}/{t.practicesTarget}</span>}
+                </td>
+                <td className="num">{t.bands.morning}</td>
+                <td className="num">{t.bands.midday}</td>
+                <td className="num">{t.bands.evening}</td>
+                <td className="num">{t.longestRepeatRun > 2
+                  ? <span className="flag wrn">{t.longestRepeatRun}</span> : t.longestRepeatRun}</td>
+                <td>{flagFor(t)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="panel">
+        <h3>By rule</h3>
+        <table>
+          <thead><tr><th>Rule</th><th>Severity</th><th className="num">Count</th></tr></thead>
+          <tbody>
+            {summarize(result).map((s) => (
+              <tr key={s.code}>
+                <td>{humanise(s.code)}</td>
+                <td><span className={`flag ${s.severity === 'error' ? 'err' : 'wrn'}`}>{s.severity}</span></td>
+                <td className="num">{s.count}</td>
+              </tr>
+            ))}
+            {result.violations.length === 0 && (
+              <tr><td colSpan={3} className="muted">Nothing to report.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {[['Errors', errors], ['Warnings', warnings]].map(([title, list]) => {
+        const items = list as typeof errors;
+        if (!items.length) return null;
+        return (
+          <div className="panel" key={title as string}>
+            <h3>{title as string}</h3>
+            <table>
+              <tbody>
+                {items.slice(0, 60).map((v, i) => (
+                  <tr key={i}>
+                    <td style={{ width: 210 }} className="muted">{humanise(v.code)}</td>
+                    <td>{v.message}</td>
+                  </tr>
+                ))}
+                {items.length > 60 && (
+                  <tr><td colSpan={2} className="muted">and {items.length - 60} more</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
+
+      <p className="muted" style={{ fontSize: 12 }}>
+        Checked against {season.slots.length} slots and {season.games.length} games.
+      </p>
+    </>
+  );
+}
+
+function flagFor(t: ValidationResult['teams'][number]) {
+  if (t.games > t.gamesTarget) return <span className="flag err">over on games</span>;
+  if (t.sameDayGameDates.length) return <span className="flag err">plays twice in a day</span>;
+  if (t.gameAndPracticeDates.length) return <span className="flag err">game and practice same day</span>;
+  if (t.games < t.gamesTarget) return <span className="flag wrn">short {t.gamesTarget - t.games}</span>;
+  if (t.practices < t.practicesTarget) return <span className="flag wrn">short on practices</span>;
+  return <span className="flag ok">clean</span>;
+}
+
+/** Rule codes are for the engine. People get sentences. */
+function humanise(code: string): string {
+  const map: Record<string, string> = {
+    SAME_DAY_DOUBLEHEADER: 'Two games in one day',
+    GAME_AND_PRACTICE_SAME_DAY: 'Game and practice same day',
+    SLOT_OVERBOOKED: 'More games than the sheet holds',
+    SLOT_SPLIT_BETWEEN_DIVISIONS: 'Two divisions on one sheet',
+    GAME_ON_PRACTICE_ICE: 'Game on practice ice',
+    GAME_ON_UNUSED_ICE: 'Game on ice out of play',
+    OVER_GAME_TARGET: 'Over the game target',
+    UNDER_GAME_TARGET: 'Short of the game target',
+    OVER_PRACTICE_TARGET: 'Over the practice target',
+    UNDER_PRACTICE_TARGET: 'Short of the practice target',
+    OVER_WEEKLY_GAMES: 'More games in a week than the league allows',
+    CONSECUTIVE_DAYS: 'Back-to-back days',
+    REPEAT_OPPONENT_RUN: 'Same opponent several times running',
+    BLACKOUT_VIOLATED: 'Team blackout date used',
+    LEAGUE_BLACKOUT_VIOLATED: 'League blackout date used',
+    TEAM_WEEKDAY_VIOLATED: 'Team playing on a day it cannot',
+    LEAGUE_WEEKDAY_BLOCKED: 'League does not play that weekday',
+    LEAGUE_WEEKDAY_NOT_ALLOWED: 'Outside the league playing days',
+    OUTSIDE_SEASON: 'Outside the season window',
+    PLAYOFFS_OVERLAP_REGULAR: 'Playoffs start before the season ends',
+    CROSS_DIVISION_GAME: 'Divisions that are not set to cross over',
+    CROSSOVER_UNKNOWN_DIVISION: 'Crossover points at a division that is gone',
+    CROSSOVER_FORMAT_MISMATCH: 'Crossover between different ice formats',
+    CROSSOVER_NO_PARTNER: 'Crossover games with nobody to play',
+    CROSSOVER_OVER_TARGET: 'More crossover games than games',
+    GAME_DIVISION_MISMATCH: 'Game filed under the wrong division',
+    HOUSEHOLD_OVERLOADED: 'One family at the rink too often in a day',
+    TIME_BAND_IMBALANCE: 'Uneven share of early and late games',
+    CONSERVATION_FAILED: 'Game and team counts do not reconcile',
+    DUPLICATE_ID: 'Duplicate id',
+    MANIFEST_UNKNOWN: 'Rule not confirmed yet',
+    PRACTICES_NOT_SUPPORTED: 'This league has no practices',
+    CROSS_ICE_NOT_SUPPORTED: 'This league does not play cross-ice',
+    PLAYOFFS_NOT_ALLOWED: 'This league does not run playoffs',
+    PLAYOFF_SIZE_UNSUPPORTED: 'Bracket size not supported',
+    PLAYOFF_SIZE_EXCEEDS_TEAMS: 'More qualifiers than teams',
+    PLAYOFF_BRACKET_MISSING: 'No bracket built yet',
+    PLAYOFF_BRACKET_ORPHAN: 'Bracket with nobody qualifying',
+    PLAYOFF_NO_ICE: 'Bracket game with no ice',
+    PLAYOFF_FEEDER_MISSING: 'Bracket refers to a game that is gone',
+    PLAYOFF_ORDER: 'Round played before the round that decides it',
+    PLAYOFF_SEEDS_PROVISIONAL: 'Seeds can still move',
+  };
+  return map[code] ?? code.toLowerCase().replace(/_/g, ' ');
+}
+
+import type { Season, LeagueManifest, IceFormat } from '@league/core';
+import { Division, MANIFESTS } from '@league/core';
+import { importBlackouts } from '@league/io';
+import { readFile } from '../lib/files';
+
+/** The season's own settings: who it is, when it runs, and its divisions. */
+export function Setup(
+  { season, manifest, onChange }:
+  { season: Season; manifest: LeagueManifest; onChange: (s: Season) => void },
+) {
+  const set = (patch: Partial<Season>) => onChange({ ...season, ...patch });
+
+  const setDivision = (id: string, patch: Partial<Division>) =>
+    set({ divisions: season.divisions.map((d) => (d.id === id ? { ...d, ...patch } : d)) });
+
+  /**
+   * Crossover is a relationship, so it is written on both divisions. Setting
+   * it one-way would read as done while only half the pair knew about it.
+   */
+  const toggleCrossover = (aId: string, bId: string) => {
+    const a = season.divisions.find((d) => d.id === aId);
+    const on = !!a && !a.playsAcross.includes(bId);
+    set({
+      divisions: season.divisions.map((d) => {
+        if (d.id !== aId && d.id !== bId) return d;
+        const other = d.id === aId ? bId : aId;
+        const next = on
+          ? [...new Set([...d.playsAcross, other])]
+          : d.playsAcross.filter((x) => x !== other);
+        // Turning the last partner off turns the count off with it.
+        return { ...d, playsAcross: next, crossGamesPerTeam: next.length ? d.crossGamesPerTeam : 0 };
+      }),
+    });
+  };
+
+  const addDivision = () => {
+    let n = season.divisions.length + 1;
+    while (season.divisions.some((d) => d.id === `D${n}`)) n++;
+    set({ divisions: [...season.divisions, Division.parse({ id: `D${n}`, name: `Division ${n}` })] });
+  };
+
+  const removeDivision = (id: string) => {
+    const teams = season.teams.filter((t) => t.divisionId === id);
+    if (teams.length && !confirm(
+      `${teams.length} teams are in this division. Remove it and them?`)) return;
+    set({
+      divisions: season.divisions.filter((d) => d.id !== id),
+      teams: season.teams.filter((t) => t.divisionId !== id),
+      games: season.games.filter((g) => g.divisionId !== id),
+      practices: season.practices.filter((p) => p.divisionId !== id),
+    });
+  };
+
+  async function importBlackoutCsv() {
+    const f = await readFile('.csv,text/csv');
+    if (!f) return;
+    try {
+      const { dates } = importBlackouts(f.text);
+      set({ blackoutDates: [...new Set([...season.blackoutDates, ...dates])].sort() });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  return (
+    <>
+      <h2>Setup</h2>
+      <p className="lede">
+        The season's name, dates and divisions. Rules come from the league and are shown on
+        Overview.
+      </p>
+
+      <div className="panel" style={{ maxWidth: 620 }}>
+        <h3>This season</h3>
+        <div className="field" style={{ marginBottom: 10 }}>
+          <label htmlFor="sn">Name</label>
+          <input id="sn" type="text" defaultValue={season.name}
+            onBlur={(e) => set({ name: e.target.value.trim() || season.name })} />
+        </div>
+        <div className="row">
+          <div className="field">
+            <label htmlFor="sl">League</label>
+            <select id="sl" value={season.leagueId} onChange={(e) => set({ leagueId: e.target.value })}>
+              {Object.values(MANIFESTS).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="s1">First day</label>
+            <input id="s1" type="date" defaultValue={season.startDate}
+              onBlur={(e) => e.target.value && set({ startDate: e.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor="s2">Last day</label>
+            <input id="s2" type="date" defaultValue={season.endDate}
+              onBlur={(e) => e.target.value && set({ endDate: e.target.value })} />
+          </div>
+        </div>
+        <div className="row" style={{ marginBottom: 0 }}>
+          <div className="field" style={{ flex: 1 }}>
+            <label htmlFor="s3">Venue</label>
+            <input id="s3" type="text" defaultValue={season.venue}
+              onBlur={(e) => set({ venue: e.target.value.trim() })} />
+          </div>
+          <div className="field">
+            <label htmlFor="s4">City</label>
+            <input id="s4" type="text" defaultValue={season.city}
+              onBlur={(e) => set({ city: e.target.value.trim() })} />
+          </div>
+        </div>
+      </div>
+
+      <div className="panel">
+        <h3>Divisions</h3>
+        <p className="lede" style={{ marginBottom: 10 }}>
+          Leave a target blank to use the league default
+          ({manifest.scheduling.defaultGamesPerTeam} games
+          {manifest.capabilities.practices
+            ? `, ${manifest.scheduling.defaultPracticesPerTeam} practices` : ''}).
+        </p>
+        {season.divisions.length === 0 ? (
+          <p className="lede">No divisions yet. Add one, or import a team list on the Teams tab —
+            divisions are created from it automatically.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr><th>Name</th><th className="num">Teams</th><th className="num">Games each</th>
+                {manifest.capabilities.practices && <th className="num">Practices each</th>}
+                <th className="num" title="Sessions this level needs before it plays. Zero means it does not run evaluations; tick it up when signups need more than one sheet.">
+                  Evaluations
+                </th>
+                <th title="How this level splits a sheet. Every team in the division plays the same way.">
+                  Ice format
+                </th>
+                <th title="Divisions this one may also play, and how many of its games are against them. Both divisions must split the ice the same way.">
+                  Crosses over with
+                </th>
+                <th className="num">Playoff teams</th><th /></tr>
+            </thead>
+            <tbody>
+              {season.divisions.map((d) => (
+                <tr key={d.id}>
+                  <td>
+                    <input type="text" defaultValue={d.name} style={{ width: 160 }}
+                      aria-label={`Division ${d.name} name`}
+                      onBlur={(e) => setDivision(d.id, { name: e.target.value.trim() || d.name })} />
+                  </td>
+                  <td className="num">{season.teams.filter((t) => t.divisionId === d.id).length}</td>
+                  <td className="num">
+                    <input type="number" min={0} className="score" value={d.gamesPerTeam ?? ''}
+                      placeholder={String(manifest.scheduling.defaultGamesPerTeam)}
+                      onChange={(e) => setDivision(d.id, {
+                        gamesPerTeam: e.target.value === '' ? null : Math.max(0, +e.target.value) })} />
+                  </td>
+                  {manifest.capabilities.practices && (
+                    <td className="num">
+                      <input type="number" min={0} className="score" value={d.practicesPerTeam ?? ''}
+                        placeholder={String(manifest.scheduling.defaultPracticesPerTeam)}
+                        onChange={(e) => setDivision(d.id, {
+                          practicesPerTeam: e.target.value === '' ? null : Math.max(0, +e.target.value) })} />
+                    </td>
+                  )}
+                  <td className="num">
+                    <input type="number" min={0} max={6} step={1} className="score"
+                      value={d.evaluationSessions} aria-label={`${d.name} evaluation sessions`}
+                      onChange={(e) => setDivision(d.id, {
+                        evaluationSessions: Math.max(0, Math.min(6, +e.target.value)) })} />
+                  </td>
+                  <td>
+                    <select value={d.iceFormat} aria-label={`${d.name} ice format`}
+                      onChange={(e) => setDivision(d.id, { iceFormat: e.target.value as IceFormat })}>
+                      <option value="full">Full ice — 1 game</option>
+                      <option value="half">Half ice — 2 games</option>
+                      <option value="cross">Cross ice — 3 games</option>
+                    </select>
+                  </td>
+                  <td>
+                    <div className="crossers">
+                      {season.divisions.filter((x) => x.id !== d.id).map((x) => {
+                        const on = d.playsAcross.includes(x.id);
+                        const clash = x.iceFormat !== d.iceFormat;
+                        return (
+                          <button key={x.id} type="button" className="pill cross"
+                            aria-pressed={on} disabled={clash}
+                            title={clash
+                              ? `${x.name} plays ${x.iceFormat} ice and ${d.name} plays ${d.iceFormat} ice`
+                              : `${d.name} and ${x.name} may play each other`}
+                            onClick={() => toggleCrossover(d.id, x.id)}>
+                            {x.name}
+                          </button>
+                        );
+                      })}
+                      {season.divisions.length < 2 && <span className="muted">—</span>}
+                    </div>
+                    {d.playsAcross.length > 0 && (
+                      <label className="crossnum">
+                        <input type="number" min={0} max={d.gamesPerTeam
+                          ?? manifest.scheduling.defaultGamesPerTeam}
+                          className="score" value={d.crossGamesPerTeam}
+                          aria-label={`${d.name} crossover games`}
+                          onChange={(e) => setDivision(d.id, {
+                            crossGamesPerTeam: Math.max(0, +e.target.value) })} />
+                        <span className="muted">of its games</span>
+                      </label>
+                    )}
+                  </td>
+                  <td className="num">
+                    <input type="number" min={0} className="score" value={d.playoffTeams}
+                      onChange={(e) => setDivision(d.id, { playoffTeams: Math.max(0, +e.target.value) })} />
+                  </td>
+                  <td>
+                    <button className="btn line" onClick={() => removeDivision(d.id)}>Remove</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div className="row" style={{ marginTop: 12, marginBottom: 0 }}>
+          <button className="btn line" onClick={addDivision}>Add division</button>
+        </div>
+      </div>
+
+      <div className="panel">
+        <h3>League blackout dates</h3>
+        <p className="lede" style={{ marginBottom: 10 }}>
+          Dates nobody plays: school breaks, holidays. The generator works around them.
+          Comma separated, YYYY-MM-DD.
+        </p>
+        <input type="text" style={{ width: '100%', maxWidth: 680 }}
+          placeholder="2026-12-24, 2026-12-25"
+          defaultValue={season.blackoutDates.join(', ')}
+          onBlur={(e) => set({
+            blackoutDates: e.target.value.split(',').map((x) => x.trim()).filter(Boolean).sort() })} />
+        <div className="row" style={{ marginTop: 12, marginBottom: 0 }}>
+          <button className="btn line" onClick={importBlackoutCsv}>Import blackout dates from CSV</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+import { useMemo, useRef, useState } from 'react';
+import type {
+  Season, LeagueManifest, Game, Practice, Slot, RepurposeSuggestion,
+} from '@league/core';
+import {
+  applySuggestions, evaluationReadiness, evaluationStatus, fmtDate, fmtDay, fmtTime,
+  gameWhen,
+} from '@league/core';
+import {
+  generateSchedule, assignPractices, type GenerateReport, type PracticeReport,
+} from '@league/engine';
+import { GameEditor } from './GameEditor';
+import { names } from '../lib/names';
+import { useRevealOnOpen } from '../lib/scroll';
+
+/**
+ * Everything that happens on the ice, in one list.
+ *
+ * It used to show games only, which made a season look half-empty: the
+ * practices were not there to show, and the booked ice sitting idle was
+ * invisible exactly when you most want to see it. Now every kind of row is
+ * here and the Show filter takes out what you are not looking at.
+ */
+
+type Kind = 'game' | 'practice' | 'evaluation' | 'free';
+
+interface Row {
+  key: string;
+  kind: Kind;
+  date: string;
+  start: string;
+  rink: string;
+  minutes: number;
+  divisionId: string;
+  teamIds: string[];
+  away: boolean;
+  game?: Game;
+  practice?: Practice;
+  slot?: Slot;
+}
+
+const SHOW: { v: Kind | 'all' | 'booked'; label: string }[] = [
+  { v: 'booked', label: 'Everything booked' },
+  { v: 'all', label: 'Everything, including free ice' },
+  { v: 'game', label: 'Games only' },
+  { v: 'practice', label: 'Practices only' },
+  { v: 'evaluation', label: 'Evaluations only' },
+  { v: 'free', label: 'Unused ice only' },
+];
+
+export function Schedule(
+  { season, manifest, onChange, fresh }:
+  { season: Season; manifest: LeagueManifest; onChange: (s: Season) => void; fresh: boolean },
+) {
+  const [team, setTeam] = useState('all');
+  const nameOf = names(season);
+  const [div, setDiv] = useState('all');
+  const [show, setShow] = useState<Kind | 'all' | 'booked'>('booked');
+  const [seed, setSeed] = useState(20262027);
+  const [busy, setBusy] = useState(false);
+  const [report, setReport] = useState<GenerateReport | null>(null);
+  const [practiceReport, setPracticeReport] = useState<PracticeReport | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  /**
+   * The editor is rendered above the schedule table, so clicking Edit on the
+   * last of 130 rows used to change something a screen and a half away with
+   * nothing to say so. Opening it scrolls to it.
+   */
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  useRevealOnOpen(editorRef, editing);
+  const [suggestions, setSuggestions] = useState<RepurposeSuggestion[]>([]);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+
+  const slot = useMemo(() => new Map(season.slots.map((s) => [s.id, s])), [season]);
+  const name = useMemo(() => new Map(season.teams.map((t) => [t.id, t.name])), [season]);
+
+  /**
+   * Teams in the chosen division, and nothing else. Offering all sixteen
+   * teams after picking 8U is a list of fourteen wrong answers.
+   */
+  const teamsForDiv = useMemo(
+    () => season.teams.filter((t) => div === 'all' || t.divisionId === div),
+    [season, div]);
+
+  /** Changing the division drops a team filter that no longer belongs to it. */
+  function pickDivision(next: string) {
+    setDiv(next);
+    if (team !== 'all' && next !== 'all'
+      && !season.teams.some((t) => t.id === team && t.divisionId === next)) setTeam('all');
+  }
+
+  const rows = useMemo<Row[]>(() => {
+    const out: Row[] = [];
+    const taken = new Map<string, number>();
+
+    for (const g of season.games) {
+      const w = gameWhen(g, slot);
+      if (!w) continue;
+      if (g.slotId) taken.set(g.slotId, (taken.get(g.slotId) ?? 0) + 1);
+      out.push({
+        key: `g:${g.id}`, kind: 'game', date: w.date, start: w.start, rink: w.rink,
+        minutes: w.minutes, divisionId: g.divisionId,
+        teamIds: [g.homeTeamId, g.awayTeamId].filter(Boolean) as string[],
+        away: w.away, game: g, slot: g.slotId ? slot.get(g.slotId) : undefined,
+      });
+    }
+
+    for (const p of season.practices) {
+      const s = slot.get(p.slotId);
+      if (!s) continue;
+      taken.set(s.id, (taken.get(s.id) ?? 0) + 1);
+      out.push({
+        key: `p:${p.id}`, kind: p.kind === 'evaluation' ? 'evaluation' : 'practice',
+        date: s.date, start: s.start, rink: s.rink, minutes: s.minutes,
+        divisionId: p.divisionId, teamIds: p.teamIds, away: false, practice: p, slot: s,
+      });
+    }
+
+    for (const s of season.slots) {
+      if (taken.has(s.id) || s.use === 'unused') continue;
+      out.push({
+        key: `f:${s.id}`, kind: 'free', date: s.date, start: s.start, rink: s.rink,
+        minutes: s.minutes, divisionId: s.ownerDivisionId ?? '', teamIds: [], away: false, slot: s,
+      });
+    }
+
+    return out.sort((a, b) =>
+      (a.date + a.start + a.rink).localeCompare(b.date + b.start + b.rink));
+  }, [season, slot]);
+
+  const shown = rows
+    .filter((r) => (show === 'all' ? true : show === 'booked' ? r.kind !== 'free' : r.kind === show))
+    .filter((r) => div === 'all' || r.divisionId === div)
+    // Free ice belongs to nobody, so a team filter hides it rather than
+    // pretending the slot is that team's.
+    .filter((r) => team === 'all' || r.teamIds.includes(team));
+
+  /**
+   * Evaluations are the first thing a division does, and everything else
+   * waits on them, so where they sit is worth showing rather than leaving
+   * someone to work it out from the rows.
+   */
+  const evals = useMemo(() => evaluationStatus(season), [season]);
+  const ready = useMemo(() => evaluationReadiness(season), [season]);
+  // Only worth a panel once a division asks for evaluations, or has some.
+  const showEvals = evals.some((e) => e.wanted > 0 || e.dates.length > 0);
+
+  const counts = useMemo(() => {
+    const c: Record<Kind, number> = { game: 0, practice: 0, evaluation: 0, free: 0 };
+    for (const r of rows) c[r.kind]++;
+    return c;
+  }, [rows]);
+
+  function run() {
+    setBusy(true);
+    // let the button paint before the engine blocks the thread
+    setTimeout(() => {
+      try {
+        const { games, report: r } = generateSchedule(season, manifest, { seed });
+        const withGames = { ...season, games };
+        const { practices, report: pr } = assignPractices(withGames, manifest);
+        setReport(r);
+        setPracticeReport(pr);
+        // Proposals only. Nothing is repurposed until the button below is pressed.
+        const all = [...r.suggestions, ...pr.suggestions]
+          .filter((s2, i, list) => list.findIndex((x) => x.slotId === s2.slotId) === i);
+        setSuggestions(all);
+        setPicked(new Set(all.map((s2) => s2.slotId)));
+        onChange({ ...withGames, practices });
+      } finally { setBusy(false); }
+    }, 16);
+  }
+
+  return (
+    <>
+      <h2>Schedule</h2>
+      <p className="lede">
+        Generating replaces every game and practice in this season. The same seed always produces
+        the same schedule, so change the seed to see a different one. Games that are locked, away
+        or part of a bracket stay where they are.
+      </p>
+
+      <div className="row">
+        <div className="field">
+          <label htmlFor="seed">Seed</label>
+          <input id="seed" type="number" value={seed} style={{ width: 120 }}
+            onChange={(e) => setSeed(+e.target.value)} />
+        </div>
+        <div className="field">
+          <label>&nbsp;</label>
+          <button className="btn go" onClick={run} disabled={busy}>
+            {busy ? 'Working…' : season.games.length ? 'Generate again' : 'Generate schedule'}
+          </button>
+        </div>
+        <div className="field">
+          <label htmlFor="show">Show</label>
+          <select id="show" value={show} onChange={(e) => setShow(e.target.value as Kind)}>
+            {SHOW.map((s) => <option key={s.v} value={s.v}>{s.label}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="d">Division</label>
+          <select id="d" value={div} onChange={(e) => pickDivision(e.target.value)}>
+            <option value="all">All divisions</option>
+            {season.divisions.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="t">Team</label>
+          <select id="t" value={team} onChange={(e) => setTeam(e.target.value)}
+            disabled={!teamsForDiv.length}>
+            <option value="all">{div === 'all' ? 'All teams' : `All ${div} teams`}</option>
+            {teamsForDiv.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+          </select>
+        </div>
+        <div className="field"><label>&nbsp;</label><span className="muted">{shown.length} shown</span></div>
+      </div>
+
+      <p className="muted" style={{ margin: '-6px 0 16px' }}>
+        {counts.game} games · {counts.practice} practices · {counts.evaluation} evaluations ·{' '}
+        <strong className={counts.free ? 'flag wrn' : ''}>{counts.free} slots with nothing on them</strong>
+      </p>
+
+      {report && (
+        <div className="panel">
+          <h3>Last run</h3>
+          <table>
+            <tbody>
+              {report.byDivision.map((d) => {
+                const p = practiceReport?.byDivision.find((x) => x.divisionId === d.divisionId);
+                return (
+                  <tr key={d.divisionId}>
+                    <td style={{ width: 140 }}><span className="chip div">{nameOf.division(d.divisionId)}</span></td>
+                    <td>
+                      {d.placed} of {d.fixtures} games placed at {d.gamesPerTeam} per team
+                      {p && p.target > 0 && (
+                        <>
+                          {' · '}
+                          <span className={p.min < p.target ? 'flag wrn' : ''}>
+                            {p.min === p.max ? `${p.min}` : `${p.min}-${p.max}`} of {p.target} practices
+                          </span>
+                          {p.patterns.length ? ` on ${p.patterns.join(', ')}` : ''}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {report.unplaced.length > 0 && (
+                <tr><td colSpan={2}>
+                  <span className="flag err">{report.unplaced.length} games could not be placed.</span>{' '}
+                  {report.unplaced.slice(0, 3).map((u) => `${u.homeId} v ${u.awayId}`).join('; ')}
+                  {report.unplaced.length > 3 ? ' …' : ''}
+                  {' '}Free up ice or relax a blackout date.
+                </td></tr>
+              )}
+              {report.playoffIce.games > 0 && (
+                <tr><td>Playoff ice</td><td>
+                  {report.playoffIce.dates.length > 0 ? (
+                    <>
+                      {report.playoffIce.dates.length} night
+                      {report.playoffIce.dates.length === 1 ? '' : 's'} held back from{' '}
+                      {fmtDate(report.playoffIce.dates[0]!)} for {report.playoffIce.games}{' '}
+                      bracket games
+                      {report.playoffIce.sufficient
+                        ? <span className="flag ok" style={{ marginLeft: 8 }}>enough</span>
+                        : <span className="flag wrn" style={{ marginLeft: 8 }}>not enough</span>}
+                    </>
+                  ) : <span className="flag wrn">no ice held back</span>}
+                  {report.playoffIce.issues.map((x, i) => (
+                    <div key={i} className="muted" style={{ marginTop: 4 }}>{x}</div>
+                  ))}
+                </td></tr>
+              )}
+              <tr><td>Longest repeat run</td><td>{report.longestRepeatRun} — a team meeting the same
+                opponent this many times in a row</td></tr>
+              {report.crossGames > 0 && (
+                <tr><td>Crossover games</td><td>
+                  {report.crossGames} against another division
+                  {report.crossShort.length > 0 && (
+                    <> — <span className="flag wrn">
+                      {report.crossShort.length} team{report.crossShort.length === 1 ? '' : 's'} got
+                      fewer than asked for; the divisions are different sizes
+                    </span></>
+                  )}
+                </td></tr>
+              )}
+              {report.busyWeeks.total > 0 && (
+                <tr><td>Two games in a week</td><td>
+                  {report.busyWeeks.total} team-week{report.busyWeeks.total === 1 ? '' : 's'},
+                  no team more than {report.busyWeeks.worstTeam}
+                  {Object.keys(report.busyWeeks.byMonth).length > 0 && (
+                    <> — {Object.entries(report.busyWeeks.byMonth).sort()
+                      .map(([mo, n]) => `${mo} ${n}`).join(', ')}</>
+                  )}
+                </td></tr>
+              )}
+              {report.ownerFirst > 0 && (
+                <tr><td>Reserved ice</td><td>
+                  {report.ownerFirst} games went to the division the slot is held for
+                  {report.ownerReleased > 0
+                    ? `, and ${report.ownerReleased} slots opened up once that division had its games`
+                    : ''}
+                </td></tr>
+              )}
+              {practiceReport && (
+                <tr><td>Practices</td><td>
+                  {practiceReport.practices} booked, {practiceReport.evaluations} evaluations
+                  {practiceReport.unusedPracticeSlots > 0
+                    ? `, ${practiceReport.unusedPracticeSlots} practice slots left over` : ''}
+                </td></tr>
+              )}
+              {report.kept + report.keptPlayoff > 0 && (
+                <tr><td>Left alone</td><td>
+                  {report.kept > 0 && `${report.kept} away or locked games`}
+                  {report.kept > 0 && report.keptPlayoff > 0 && ', '}
+                  {report.keptPlayoff > 0 && `${report.keptPlayoff} bracket games`}
+                  {' kept exactly where they were'}
+                </td></tr>
+              )}
+              {practiceReport?.issues.map((t, i) => (
+                <tr key={`pi${i}`}><td /><td><span className="flag wrn">{t}</span></td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showEvals && (
+        <div className="panel">
+          <div className="editor-head">
+            <h3>Evaluations</h3>
+            <span className={ready.fulfilled ? 'flag ok' : 'flag wrn'}>
+              {ready.percent}% ready — {ready.ready} of {ready.total} division
+              {ready.total === 1 ? '' : 's'}
+            </span>
+          </div>
+          <p className="lede" style={{ marginBottom: 12 }}>
+            Evaluations come first. A division plays nothing — no game, no practice — until its
+            last session is done, so these dates set when each level's season can start. A
+            division is ready when it has the sessions it asked for and nothing is scheduled
+            before them. Set how many each level needs on Setup; zero means it does not run them.
+          </p>
+          <table>
+            <thead>
+              <tr><th>Division</th><th>Ready</th><th>When</th>
+                <th>Plays from</th><th className="num">Sheets</th></tr>
+            </thead>
+            <tbody>
+              {evals.filter((e) => e.wanted > 0 || e.dates.length > 0).map((e) => (
+                <tr key={e.divisionId}>
+                  <td><span className="chip div">{nameOf.division(e.divisionId)}</span></td>
+                  <td>
+                    {e.fulfilled
+                      ? <span className="flag ok">Ready</span>
+                      : <span className="flag wrn">{e.blockers.join('; ')}</span>}
+                  </td>
+                  <td>{e.dates.length
+                    ? e.dates.map((d) => `${fmtDate(d)} (${fmtDay(d)})`).join(', ')
+                    : <span className="muted">—</span>}</td>
+                  <td>{e.playsFrom
+                    ? <>{fmtDate(e.playsFrom)}</>
+                    : <span className="muted">anytime</span>}</td>
+                  <td className="num muted">{e.booked} of {e.wanted || e.booked}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {suggestions.length > 0 && (
+        <div className="panel" style={{ borderLeft: '3px solid var(--warn)' }}>
+          <h3>Ice that could fill the gaps</h3>
+          <p className="lede" style={{ marginBottom: 12 }}>
+            Nothing here has been changed. These are slots that could be used for something other
+            than what they were booked as, cheapest first — out-of-play ice before empty ice,
+            empty ice before ice somebody is on. Untick anything you want left alone.
+          </p>
+          <div className="scroll-x">
+            <table>
+              <thead>
+                <tr><th /><th>Date</th><th>Day</th><th>Time</th><th>Rink</th>
+                  <th>Booked as</th><th>Would become</th><th>Why this one</th></tr>
+              </thead>
+              <tbody>
+                {suggestions.map((s2) => (
+                  <tr key={s2.slotId}>
+                    <td>
+                      <input type="checkbox" checked={picked.has(s2.slotId)}
+                        aria-label={`use ${s2.date} ${fmtTime(s2.start)} for ${s2.to}`}
+                        onChange={(e) => setPicked((prev) => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(s2.slotId); else next.delete(s2.slotId);
+                          return next;
+                        })} />
+                    </td>
+                    <td>{fmtDate(s2.date)}</td>
+                    <td className="muted">{fmtDay(s2.date)}</td>
+                    <td>{fmtTime(s2.start)}</td>
+                    <td>{s2.rink}</td>
+                    <td className="muted">{s2.from}</td>
+                    <td><strong>{s2.to}</strong>{s2.divisionId
+                      ? <span className="chip div" style={{ marginLeft: 6 }}>{nameOf.division(s2.divisionId)}</span> : null}</td>
+                    <td className="muted">{s2.why}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="row" style={{ marginTop: 12, marginBottom: 0 }}>
+            <button className="btn go" disabled={!picked.size} onClick={() => {
+              const take = suggestions.filter((s2) => picked.has(s2.slotId));
+              onChange(applySuggestions(season, take,
+                'Repurposed to fill a gap in the schedule'));
+              setSuggestions([]);
+              setPicked(new Set());
+            }}>
+              Use {picked.size} slot{picked.size === 1 ? '' : 's'} this way
+            </button>
+            <button className="btn line" onClick={() => { setSuggestions([]); setPicked(new Set()); }}>
+              Leave the ice as it is
+            </button>
+            <span className="muted">Then generate again to fill them.</span>
+          </div>
+        </div>
+      )}
+
+      <div ref={editorRef}>
+        {editing && (() => {
+          const g = season.games.find((x) => x.id === editing);
+          return g ? (
+            <GameEditor season={season} manifest={manifest} game={g}
+              onApply={onChange} onClose={() => setEditing(null)} />
+          ) : null;
+        })()}
+      </div>
+
+      {shown.length === 0 ? (
+        <div className="empty">
+          <p>{rows.length
+            ? 'Nothing matches those filters. Widen Show, or pick a different division.'
+            : 'No ice booked yet. Import a Finnly export on Ice, then generate.'}</p>
+        </div>
+      ) : (
+        <div className="scroll-x"><table className={fresh ? 'fresh' : ''}>
+          <thead>
+            <tr><th className="num">#</th><th>Date</th><th>Day</th><th>Time</th><th>Rink</th>
+              <th>What</th><th>Division</th><th>Who</th><th /></tr>
+          </thead>
+          <tbody>
+            {shown.map((r, i) => (
+              <tr key={r.key} className={editing === r.game?.id ? 'is-current' : ''}>
+                <td className="num muted">{i + 1}</td>
+                <td>{fmtDate(r.date)}</td>
+                <td className="muted">{fmtDay(r.date)}</td>
+                <td>{fmtTime(r.start)}</td>
+                <td>
+                  {r.rink}
+                  {r.away && <span className="chip away" title="Played at another rink">away</span>}
+                  {r.game?.locked && <span className="chip lock" title="The generator will not move this">locked</span>}
+                </td>
+                <td><Kind row={r} /></td>
+                <td>
+                  {r.divisionId
+                    ? <span className="chip div">{nameOf.division(r.divisionId)}</span>
+                    : <span className="muted">—</span>}
+                </td>
+                <td>{who(r, name)}</td>
+                <td>
+                  {r.game && (
+                    <button className="btn line" onClick={() => setEditing(r.game!.id)}>Edit</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table></div>
+      )}
+    </>
+  );
+}
+
+function Kind({ row }: { row: Row }) {
+  if (row.kind === 'game') {
+    const t = row.game?.type ?? 'regular';
+    return t === 'regular'
+      ? <span className="chip kind game">Game</span>
+      : <span className="chip kind po">{t}</span>;
+  }
+  if (row.kind === 'practice') return <span className="chip kind prac">Practice</span>;
+  if (row.kind === 'evaluation') return <span className="chip kind eval">Evaluation</span>;
+  return <span className="chip kind free">Free</span>;
+}
+
+function who(r: Row, name: Map<string, string>) {
+  if (r.kind === 'game') {
+    const h = r.game!.homeTeamId ? name.get(r.game!.homeTeamId) ?? r.game!.homeTeamId : r.game!.homeLabel;
+    const a = r.game!.awayTeamId ? name.get(r.game!.awayTeamId) ?? r.game!.awayTeamId : r.game!.awayLabel;
+    return <>{h} <span className="muted">v</span> {a}</>;
+  }
+  if (r.kind === 'free') {
+    const s = r.slot!;
+    if (s.ownerDivisionId) {
+      return (
+        <span className="muted">
+          held for {s.ownerDivisionId}
+          {s.ownerPolicy === 'priority' ? ', releases when they are done' : ', reserved'}
+        </span>
+      );
+    }
+    if (s.use === 'playoff') {
+      return <span className="muted">held for the playoffs, nothing on it yet</span>;
+    }
+    return <span className="muted">{s.use === 'game' ? 'game ice, nothing on it' : `${s.use} ice, nothing on it`}</span>;
+  }
+  if (!r.teamIds.length) return <span className="flag wrn">nobody assigned</span>;
+  return <>{r.teamIds.map((t) => name.get(t) ?? t).join(', ')}</>;
+}
+
+import { useMemo, useState } from 'react';
+import type { Season, LeagueManifest, Game, Division } from '@league/core';
+import {
+  BRACKET_SIZES, bracketGameCount, bracketProgress, bracketRounds, clearPlayoffs,
+  codeOfGameId, fmtDate, fmtDay, fmtTime, gameWhen, isBracketSize, isPlayed, playoffGames,
+  resolveBracket, ROUND_LABELS, standings,
+} from '@league/core';
+import { generatePlayoffs, playoffIceAvailable, type PlayoffReport } from '@league/engine';
+import { names } from '../lib/names';
+
+/**
+ * Brackets.
+ *
+ * Seeds are live: they come from the standings as they stand, so the bracket
+ * is readable the moment a division has a table, and it firms up as the last
+ * results go in. Nothing here is hand-typed twice.
+ */
+export function Playoffs(
+  { season, manifest, onChange }:
+  { season: Season; manifest: LeagueManifest; onChange: (s: Season) => void },
+) {
+  // Held on the season, not in this component: the generator reads the same
+  // setting when it decides how much ice to hold back for the brackets, and
+  // the two must not disagree.
+  const consolation = season.playoffConsolation;
+  const [restDays, setRestDays] = useState(0);
+  const [report, setReport] = useState<PlayoffReport | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const slot = useMemo(() => new Map(season.slots.map((s) => [s.id, s])), [season]);
+  const name = useMemo(() => new Map(season.teams.map((t) => [t.id, t.name])), [season]);
+  const nameOf = useMemo(() => names(season), [season]);
+  const table = useMemo(() => standings(season, manifest), [season, manifest]);
+  const bracket = playoffGames(season);
+
+  const qualifying = season.divisions.filter((d) => d.playoffTeams > 0);
+  const wanted = qualifying.reduce((n, d) =>
+    n + (isBracketSize(d.playoffTeams) ? bracketGameCount(d.playoffTeams, consolation) : 0), 0);
+
+  function setDivision(id: string, patch: Partial<Division>) {
+    onChange({
+      ...season,
+      divisions: season.divisions.map((d) => (d.id === id ? { ...d, ...patch } : d)),
+    });
+  }
+
+  function build() {
+    setBusy(true);
+    setTimeout(() => {
+      try {
+        const { games, report: r } = generatePlayoffs(season, manifest, { consolation, restDays });
+        setReport(r);
+        onChange({ ...season, games });
+      } finally { setBusy(false); }
+    }, 16);
+  }
+
+  function clear() {
+    setReport(null);
+    onChange(clearPlayoffs(season));
+  }
+
+  if (!manifest.capabilities.playoffs) {
+    return (
+      <>
+        <h2>Playoffs</h2>
+        <div className="empty">
+          <p><strong>{manifest.name}</strong> does not run playoffs — the regular-season table
+            decides it. That is a league rule, held in the league manifest, not a setting on this
+            season.</p>
+          <p className="muted">To change it, set <code>capabilities.playoffs</code> for{' '}
+            <code>{manifest.id}</code> in <code>packages/core/src/manifest.ts</code>.</p>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h2>Playoffs</h2>
+      <p className="lede">
+        Pick how many teams qualify in each division and the bracket builds itself, seeded off the
+        standings and fitted into the ice left after the regular season. Finals go as late as the
+        booked ice allows; every earlier round lands before the round it feeds.
+      </p>
+
+      <div className="panel">
+        <h3>Who qualifies</h3>
+        <table>
+          <thead>
+            <tr><th>Division</th><th className="num">Teams</th><th>Qualify</th>
+              <th className="num">Games</th><th>Ice free after their season</th></tr>
+          </thead>
+          <tbody>
+            {season.divisions.map((d) => {
+              const teams = season.teams.filter((t) => t.divisionId === d.id).length;
+              const ice = playoffIceAvailable(season, manifest, d.id);
+              const slots = ice.reduce((n, x) => n + x.slots, 0);
+              const need = isBracketSize(d.playoffTeams)
+                ? bracketGameCount(d.playoffTeams, consolation) : 0;
+              return (
+                <tr key={d.id}>
+                  <td><strong>{d.name}</strong></td>
+                  <td className="num">{teams}</td>
+                  <td>
+                    <select value={d.playoffTeams} aria-label={`${d.name} playoff teams`}
+                      onChange={(e) => setDivision(d.id, { playoffTeams: +e.target.value })}>
+                      <option value={0}>No playoffs</option>
+                      {BRACKET_SIZES.filter((n) => n <= Math.max(teams, 2)).map((n) => (
+                        <option key={n} value={n}>Top {n}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="num">{need || <span className="muted">—</span>}</td>
+                  <td className={slots < need ? 'flag wrn' : 'muted'}>
+                    {slots} slot{slots === 1 ? '' : 's'} over {ice.length} night
+                    {ice.length === 1 ? '' : 's'}
+                    {slots < need ? ' — short' : ''}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <p className="muted" style={{ margin: '10px 0 0' }}>
+          Those nights are the same ice: divisions share it, so the counts overlap and the
+          totals do not add up. Build the brackets to see what actually fits.
+        </p>
+      </div>
+
+      <div className="row">
+        <div className="field">
+          <label htmlFor="cons">Third-place game</label>
+          <select id="cons" value={consolation ? 'yes' : 'no'}
+            onChange={(e) => onChange({
+              ...season, playoffConsolation: e.target.value === 'yes',
+            })}>
+            <option value="no">No — beaten semifinalists are done</option>
+            <option value="yes">Yes — losers play for third</option>
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="rest">Rest between rounds</label>
+          <select id="rest" value={restDays} onChange={(e) => setRestDays(+e.target.value)}>
+            <option value={0}>None — next day is fine</option>
+            <option value={1}>1 clear day</option>
+            <option value={2}>2 clear days</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>&nbsp;</label>
+          <button className="btn go" onClick={build} disabled={busy || !qualifying.length}>
+            {busy ? 'Working…' : bracket.length ? 'Rebuild brackets' : 'Build brackets'}
+          </button>
+        </div>
+        <div className="field">
+          <label>&nbsp;</label>
+          <button className="btn line" onClick={() => {
+            if (confirm('Remove every bracket game? The ice they hold goes back in the pool.')) clear();
+          }} disabled={!bracket.length}>Clear brackets</button>
+        </div>
+        <div className="field">
+          <label>&nbsp;</label>
+          <span className="muted">
+            {bracket.length ? `${bracket.length} bracket games` : `${wanted} games to build`}
+          </span>
+        </div>
+      </div>
+
+      {report && (
+        <div className="panel">
+          <h3>Last run</h3>
+          <table>
+            <tbody>
+              {report.byDivision.map((d) => (
+                <tr key={d.divisionId}>
+                  <td style={{ width: 170 }}><span className="chip div">{nameOf.division(d.divisionId)}</span>{' '}
+                    top {d.size}</td>
+                  <td>
+                    <span className={d.placed < d.needed ? 'flag err' : 'flag ok'}>
+                      {d.placed} of {d.needed} placed
+                    </span>{' '}{d.note}
+                  </td>
+                </tr>
+              ))}
+              {report.finalsOn && (
+                <tr><td>Finals</td><td>{fmtDate(report.finalsOn)}, {fmtDay(report.finalsOn)}</td></tr>
+              )}
+              <tr><td>Ice still free</td><td>{report.spareSlots} game slot
+                {report.spareSlots === 1 ? '' : 's'} with nothing on {report.spareSlots === 1 ? 'it' : 'them'}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {!bracket.length ? (
+        <div className="empty">
+          <p>No brackets yet. Set how many teams qualify above, then build.</p>
+          <p className="muted">Seeds read straight off the standings, so you can build the bracket
+            now and watch it settle as results come in.</p>
+        </div>
+      ) : season.divisions.filter((d) => bracketRounds(season, d.id).length).map((d) => {
+        const rounds = bracketRounds(season, d.id);
+        const prog = bracketProgress(season, d.id);
+        const seeds = table.filter((r) => r.divisionId === d.id).slice(0, d.playoffTeams);
+        return (
+          <div className="panel" key={d.id}>
+            <div className="editor-head">
+              <h3>{d.name}</h3>
+              <span className="muted">
+                {prog.champion
+                  ? <span className="flag ok">{prog.champion} wins it</span>
+                  : prog.pendingRegular
+                    ? `${prog.pendingRegular} regular-season game${prog.pendingRegular === 1 ? '' : 's'} still to play — seeds can move`
+                    : 'seeds final'}
+              </span>
+            </div>
+
+            {seeds.length > 0 && (
+              <p className="muted" style={{ margin: '0 0 10px' }}>
+                {seeds.map((r, i) => (
+                  <span key={r.teamId}>{i ? ' · ' : ''}<strong>{i + 1}</strong> {r.teamName}</span>
+                ))}
+              </p>
+            )}
+
+            <div className="bracket">
+              {rounds.map((round, ri) => (
+                <div className="round" key={ri}>
+                  <h4>{round.length === 1 || round[0]!.type !== 'final'
+                    ? ROUND_LABELS[round[0]!.type] ?? `Round ${ri + 1}`
+                    : 'Final'}</h4>
+                  {round.map((g) => <Tie key={g.id} game={g} season={season} name={name} slot={slot} />)}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+/** One bracket game: who, when, where, and the score if it has been played. */
+function Tie(
+  { game: g, name, slot }:
+  {
+    game: Game; season: Season; name: Map<string, string>;
+    slot: Map<string, import('@league/core').Slot>;
+  },
+) {
+  const w = gameWhen(g, slot);
+  const played = isPlayed(g) && g.homeTeamId && g.awayTeamId;
+  const winner = played && g.homeGoals !== g.awayGoals
+    ? (g.homeGoals! > g.awayGoals! ? g.homeTeamId : g.awayTeamId) : null;
+  const side = (id: string | null, label: string, goals: number | null) => (
+    <div className={`side${id && winner === id ? ' won' : ''}${id ? '' : ' tbd'}`}>
+      <span className="who">{id ? name.get(id) ?? id : label}</span>
+      <span className="goals">{goals ?? ''}</span>
+    </div>
+  );
+  return (
+    <div className="tie">
+      <div className="tie-head">
+        <span className="code">{codeOfGameId(g.id).toUpperCase()}</span>
+        {w ? <span>{fmtDate(w.date)} · {fmtTime(w.start)} · {w.rink}</span>
+          : <span className="flag err">no ice</span>}
+      </div>
+      {side(g.homeTeamId, g.homeLabel, g.homeGoals)}
+      {side(g.awayTeamId, g.awayLabel, g.awayGoals)}
+    </div>
+  );
+}
+
+/** Re-seeds a season's brackets. Exported so Results can call it on each edit. */
+export const reseed = resolveBracket;
+
+import type { Season, LeagueManifest } from '@league/core';
+import { repurposedSlots } from '@league/core';
+import {
+  exportSportNinja, exportScheduleCsv, exportUnusedIceCsv, exportChangesCsv,
+  exportIceDifferencesCsv, publicPage, saveSeason, unusedIceSummary,
+} from '@league/io';
+import { download } from '../lib/files';
+
+export function Exports({ season, manifest }: { season: Season; manifest: LeagueManifest }) {
+  const placed = season.games.filter((g) => g.slotId || g.away).length;
+  const free = unusedIceSummary(season);
+  const stem = season.id;
+  const get = (suffix: string, body: string, type: string) =>
+    () => download(`${stem}-${suffix}`, body, type);
+
+  const schedule = get('schedule.csv', exportScheduleCsv(season), 'text/csv');
+  const sportninja = get('sportninja.csv',
+    exportSportNinja(season, { venue: season.venue, city: season.city }), 'text/csv');
+  const unused = get('unused-ice.csv', exportUnusedIceCsv(season), 'text/csv');
+  const changelog = get('changes.csv', exportChangesCsv(season), 'text/csv');
+  const page = get('schedule.html', publicPage(season, manifest), 'text/html');
+  const json = get(`${''}season.json`, saveSeason(season), 'application/json');
+  const moved = repurposedSlots(season);
+  const differences = get('ice-differences.csv', exportIceDifferencesCsv(season), 'text/csv');
+
+
+
+  return (
+    <>
+      <h2>Export</h2>
+      <p className="lede">
+        Files download to this computer. The season file never carries player names or contact
+        details unless you ask for them.
+      </p>
+
+      <div className="panel">
+        <h3>Schedule for people</h3>
+        <p className="lede" style={{ marginBottom: 12 }}>
+          {placed} games, in date order, with day names. The one to send coaches.
+        </p>
+        <button className="btn line" onClick={schedule} disabled={!placed}>Download schedule CSV</button>
+      </div>
+
+      <div className="panel">
+        <h3>Schedule for SportNinja</h3>
+        <p className="lede" style={{ marginBottom: 12 }}>
+          The exact column order and date format SportNinja's importer expects. Upload a few rows
+          as a test before the whole file.
+        </p>
+        <button className="btn line" onClick={sportninja} disabled={!placed}>Download SportNinja CSV</button>
+      </div>
+
+      <div className="panel">
+        <h3>Ice you are not using</h3>
+        <p className="lede" style={{ marginBottom: 12 }}>
+          {free.slots} slots, {free.hours.toFixed(1)} hours. Release it or sell it.
+        </p>
+        <button className="btn line" onClick={unused} disabled={!free.slots}>Download unused ice CSV</button>
+      </div>
+
+      <div className="panel">
+        <h3>Ice used differently from how it was booked</h3>
+        <p className="lede" style={{ marginBottom: 12 }}>
+          {moved.length
+            ? `${moved.length} slot${moved.length === 1 ? '' : 's'} where the booking and the `
+              + 'schedule disagree — a game sheet running an evaluation, say. Send this to '
+              + 'whoever keeps the booking system so the front desk is not surprised.'
+            : 'Nothing is being used for anything other than what it was booked as.'}
+        </p>
+        <button className="btn line" onClick={differences} disabled={!moved.length}>
+          Download ice differences CSV
+        </button>
+      </div>
+
+      <div className="panel">
+        <h3>Schedule for families</h3>
+        <p className="lede" style={{ marginBottom: 12 }}>
+          One web page with the schedule, results, standings and every change so far.
+          It filters by team and prints cleanly. No player names, nothing loaded from
+          anywhere else, so it is safe to post publicly.
+        </p>
+        <button className="btn line" onClick={page} disabled={!placed}>Download schedule page</button>
+      </div>
+
+      <div className="panel">
+        <h3>Change log</h3>
+        <p className="lede" style={{ marginBottom: 12 }}>
+          {season.changes.length
+            ? `${season.changes.length} ${season.changes.length === 1 ? 'game has' : 'games have'} moved, with the reason recorded.`
+            : 'Nothing has moved yet. Moves made in the schedule editor are recorded here.'}
+        </p>
+        <button className="btn line" onClick={changelog} disabled={!season.changes.length}>
+          Download change log CSV
+        </button>
+      </div>
+
+      <div className="panel">
+        <h3>Season file</h3>
+        <p className="lede" style={{ marginBottom: 12 }}>
+          Everything above plus the rules, so you can reopen exactly this state later.
+        </p>
+        <button className="btn line" onClick={json}>Download season JSON</button>
+      </div>
+    </>
+  );
+}
+
+import { useMemo, useState } from 'react';
+import type { Season, LeagueManifest } from '@league/core';
+import {
+  PLAYOFF_TYPES, ROUND_LABELS, codeOfGameId, fmtDate, fmtDay, fmtTime, gameWhen,
+  isPlayed, resultProgress, standings,
+} from '@league/core';
+import { names } from '../lib/names';
+
+/** Entering scores, and the standings they produce. */
+export function Results(
+  { season, manifest, onChange }:
+  { season: Season; manifest: LeagueManifest; onChange: (s: Season) => void },
+) {
+  const [div, setDiv] = useState('all');
+  const [only, setOnly] = useState<'all' | 'open'>('all');
+
+  const slot = useMemo(() => new Map(season.slots.map((s) => [s.id, s])), [season]);
+  const name = useMemo(() => new Map(season.teams.map((t) => [t.id, t.name])), [season]);
+  const nameOf = useMemo(() => names(season), [season]);
+  const table = useMemo(() => standings(season, manifest), [season, manifest]);
+  const progress = resultProgress(season);
+
+  const setScore = (id: string, side: 'homeGoals' | 'awayGoals', raw: string) => {
+    const v = raw.trim() === '' ? null : Math.max(0, Math.floor(Number(raw)));
+    if (v !== null && !Number.isFinite(v)) return;
+    onChange({ ...season, games: season.games.map((g) => (g.id === id ? { ...g, [side]: v } : g)) });
+  };
+
+  const rows = season.games
+    .map((g) => ({ g, w: gameWhen(g, slot) }))
+    .filter((x) => x.w)
+    .filter((x) => div === 'all' || x.g.divisionId === div)
+    .filter((x) => only === 'all' || !isPlayed(x.g))
+    .sort((a, b) => (a.w!.date + a.w!.start).localeCompare(b.w!.date + b.w!.start));
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  return (
+    <>
+      <h2>Results</h2>
+      <p className="lede">
+        {progress.played} of {progress.total} regular-season games have a score.
+        Standings below update as you type.
+      </p>
+
+      <div className="row">
+        <div className="field">
+          <label htmlFor="rdiv">Division</label>
+          <select id="rdiv" value={div} onChange={(e) => setDiv(e.target.value)}>
+            <option value="all">All divisions</option>
+            {season.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="ronly">Show</label>
+          <select id="ronly" value={only} onChange={(e) => setOnly(e.target.value as 'all' | 'open')}>
+            <option value="all">Every game</option>
+            <option value="open">Still waiting on a score</option>
+          </select>
+        </div>
+        <div className="field"><label>&nbsp;</label><span className="muted">{rows.length} games</span></div>
+      </div>
+
+      <div className="scroll-x">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Day</th><th>Time</th><th>Division</th><th>Home</th>
+              <th className="num">Goals</th><th className="num">Goals</th><th>Visitor</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            {rows.map(({ g, w }) => {
+              const played = isPlayed(g);
+              const past = w!.date <= today;
+              // A bracket game with an unknown side cannot take a score: there
+              // is nobody to credit it to, and typing one in would only look
+              // like a result.
+              const pending = PLAYOFF_TYPES.has(g.type) && !(g.homeTeamId && g.awayTeamId);
+              return (
+                <tr key={g.id}>
+                  <td>{fmtDate(w!.date)}</td>
+                  <td className="muted">{fmtDay(w!.date)}</td>
+                  <td>{fmtTime(w!.start)}</td>
+                  <td><span className="chip div">{nameOf.division(g.divisionId)}</span>
+                    {PLAYOFF_TYPES.has(g.type) && (
+                      <span className="chip po" title={ROUND_LABELS[g.type]}>
+                        {codeOfGameId(g.id).toUpperCase()}</span>
+                    )}</td>
+                  <td>{name.get(g.homeTeamId ?? '') ?? g.homeLabel}</td>
+                  <td className="num">
+                    <input type="number" min={0} className="score" value={g.homeGoals ?? ''}
+                      disabled={pending} title={pending ? 'Waiting on the round before this one' : undefined}
+                      aria-label={`${name.get(g.homeTeamId ?? '') ?? 'home'} goals`}
+                      onChange={(e) => setScore(g.id, 'homeGoals', e.target.value)} />
+                  </td>
+                  <td className="num">
+                    <input type="number" min={0} className="score" value={g.awayGoals ?? ''}
+                      disabled={pending} title={pending ? 'Waiting on the round before this one' : undefined}
+                      aria-label={`${name.get(g.awayTeamId ?? '') ?? 'visitor'} goals`}
+                      onChange={(e) => setScore(g.id, 'awayGoals', e.target.value)} />
+                  </td>
+                  <td>{name.get(g.awayTeamId ?? '') ?? g.awayLabel}</td>
+                  <td>{pending ? <span className="muted">bracket</span>
+                    : resultOf(g, name, played, past)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {manifest.capabilities.standings && (
+        <>
+          <h2 style={{ marginTop: 26 }}>Standings</h2>
+          {season.divisions.map((d) => {
+            const rs = table.filter((r) => r.divisionId === d.id);
+            if (!rs.length) return null;
+            return (
+              <div className="panel" key={d.id}>
+                <h3>{d.name}</h3>
+                <table>
+                  <thead>
+                    <tr><th className="num">#</th><th>Team</th><th className="num">GP</th>
+                      <th className="num">W</th><th className="num">L</th><th className="num">T</th>
+                      <th className="num">Pts</th><th className="num">GF</th><th className="num">GA</th>
+                      <th className="num">+/-</th><th>Last 5</th></tr>
+                  </thead>
+                  <tbody>
+                    {rs.map((r) => (
+                      <tr key={r.teamId}>
+                        <td className="num muted">{r.rank}</td>
+                        <td><strong>{r.teamName}</strong></td>
+                        <td className="num">{r.played}</td><td className="num">{r.won}</td>
+                        <td className="num">{r.lost}</td><td className="num">{r.tied}</td>
+                        <td className="num"><strong>{r.points}</strong></td>
+                        <td className="num">{r.goalsFor}</td><td className="num">{r.goalsAgainst}</td>
+                        <td className="num">{r.diff > 0 ? `+${r.diff}` : r.diff}</td>
+                        <td>{r.form.slice(0, 5).map((f, i) => (
+                          <i key={i} className={`form f${f}`}>{f}</i>
+                        ))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </>
+      )}
+    </>
+  );
+}
+
+function resultOf(
+  g: { homeTeamId: string | null; awayTeamId: string | null; homeGoals: number | null; awayGoals: number | null },
+  name: Map<string, string>, played: boolean, past: boolean,
+) {
+  if (!played) {
+    return past ? <span className="flag wrn">needs a score</span> : <span className="muted">to come</span>;
+  }
+  if (g.homeGoals === g.awayGoals) return <span className="muted">tie</span>;
+  const winner = g.homeGoals! > g.awayGoals! ? g.homeTeamId : g.awayTeamId;
+  return <span className="flag ok">{name.get(winner ?? '') ?? 'winner'}</span>;
+}
+
+import { useMemo, useRef, useState } from 'react';
+import type { IceRule, OwnerPolicy, Season, Slot, SlotUse, Weekday } from '@league/core';
+import {
+  FORMAT_LABEL, applyIceRules, describeRule, fmtDate, fmtDay, fmtTime, isRepurposed,
+  repurposeSlot, repurposedSlots, revertSlot, slotHolds, slotIsBusy, suggestIceRules,
+} from '@league/core';
+import { importIceSlots, type ImportIssue } from '@league/io';
+import { readFile } from '../lib/files';
+import { useRevealOnOpen } from '../lib/scroll';
+
+const WEEKDAYS: Weekday[] = [
+  'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday',
+];
+
+const USES: { v: SlotUse; label: string; hint: string }[] = [
+  { v: 'game', label: 'Game', hint: 'Regular-season games' },
+  { v: 'practice', label: 'Practice', hint: 'Practice ice' },
+  { v: 'evaluation', label: 'Evaluation', hint: 'Evaluation skates, before the season opens' },
+  {
+    v: 'playoff',
+    label: 'Playoff',
+    // Marking ice as the playoffs' own is how the rink sets the end of the
+    // regular season. The generator cannot put a regular game here at all,
+    // so the rest of the season has to fit in front of it — which is the
+    // point, and where the doubled-up weekends come from.
+    hint: 'Held for the brackets. The regular season must finish before it.',
+  },
+  { v: 'unused', label: 'Out of play', hint: 'Booked but not being used' },
+];
+
+export function Ice({ season, onChange }: { season: Season; onChange: (s: Season) => void }) {
+  const [rink, setRink] = useState('all');
+  const [use, setUse] = useState('all');
+  const [issues, setIssues] = useState<ImportIssue[]>([]);
+  const [note, setNote] = useState('');
+  /**
+   * Both of these sit above a table of every slot in the season. Opening the
+   * rules panel, or adding a slot, from the bottom of that table used to
+   * change the top of the page out of sight. A new slot is dated to the season
+   * start, so it lands at the top of the list too — right under the note that
+   * says it was added.
+   */
+  const rulesRef = useRef<HTMLDivElement | null>(null);
+  const noteRef = useRef<HTMLDivElement | null>(null);
+
+  const [showRules, setShowRules] = useState(false);
+  useRevealOnOpen(rulesRef, showRules);
+  useRevealOnOpen(noteRef, note);
+
+  const usedSlots = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const g of season.games) if (g.slotId) m.set(g.slotId, (m.get(g.slotId) ?? 0) + 1);
+    for (const p of season.practices) if (p.teamIds.length) m.set(p.slotId, (m.get(p.slotId) ?? 0) + p.teamIds.length);
+    return m;
+  }, [season]);
+
+  const rinks = useMemo(() => [...new Set(season.slots.map((s) => s.rink))].sort(), [season]);
+  const moved = repurposedSlots(season);
+  /**
+   * Date order, always. The list was showing slots in whatever order the
+   * season file happened to hold them, which is import order — fine until
+   * you add a sheet by hand, which appends it. A slot dated early January
+   * then appeared below one in late February, under a note saying to correct
+   * its date "below".
+   */
+  const rows = season.slots
+    .filter((s) => (rink === 'all' || s.rink === rink)
+      && (use === 'all' || (use === 'repurposed' ? isRepurposed(s) : s.use === use)))
+    .sort((a, b) => (a.date + a.start + a.rink).localeCompare(b.date + b.start + b.rink));
+
+  const edit = (id: string, patch: Partial<Slot>) =>
+    onChange({ ...season, slots: season.slots.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
+
+  /**
+   * Changing what a slot is for is a decision, not a typo fix: it is recorded
+   * against what the building booked, protected from the rules pass, and
+   * listed in the handback to whoever keeps Finnly.
+   */
+  const changeUse = (slot: Slot, use: SlotUse) => {
+    if (use === slot.use) return;
+    if (slotIsBusy(season, slot.id)
+      && !confirm('Something is booked on this slot. Change what it is for anyway?')) return;
+    const booked = slot.bookedUse ?? slot.use;
+    const note = use === booked ? '' : (prompt(
+      `This slot was booked as ${booked}. Why is it being used for ${use}?`,
+      slot.repurposeNote || '') ?? '');
+    onChange(repurposeSlot(season, slot.id, use, { note }));
+  };
+
+  const remove = (id: string) => {
+    if (usedSlots.has(id) && !confirm('Something is booked in this slot. Remove it anyway?')) return;
+    onChange({
+      ...season,
+      slots: season.slots.filter((s) => s.id !== id),
+      games: season.games.map((g) => (g.slotId === id ? { ...g, slotId: null } : g)),
+      practices: season.practices.filter((p) => p.slotId !== id),
+    });
+  };
+
+  /** A blank slot you fill in, dated today or the season start. */
+  const add = () => {
+    const date = season.startDate;
+    let n = 1;
+    let id = `manual-${date}-${n}`;
+    while (season.slots.some((s) => s.id === id)) id = `manual-${date}-${++n}`;
+    const slot: Slot = {
+      id, date, start: '18:00', minutes: 60,
+      rink: rinks[0] ?? 'Red Hawk', use: 'game', capacity: 0, practiceTeams: 0,
+      ownerDivisionId: null, ownerPolicy: 'priority',
+      bookedUse: 'game', repurposeNote: '', tag: 'added by hand',
+    };
+    onChange({ ...season, slots: [...season.slots, slot] });
+    setNote(`Added a slot on ${fmtDate(date)}. Change its date, time and rink below.`);
+    setIssues([]);
+  };
+
+  async function importCsv() {
+    const f = await readFile('.csv,text/csv');
+    if (!f) return;
+    try {
+      const r = importIceSlots(f.text, {
+        defaultUse: 'game',
+        divisionIds: season.divisions.map((d) => d.id),
+      });
+      const key = (s: { date: string; start: string; rink: string }) =>
+        `${s.date}|${s.start}|${s.rink}`;
+      const byKey = new Map(season.slots.map((s) => [key(s), s]));
+      const fresh = r.items.filter((s) => !byKey.has(key(s)));
+      const dupes = r.items.length - fresh.length;
+
+      // A slot we deliberately repurposed keeps our use, as agreed: the file
+      // says what the building booked, we say what is happening on the ice.
+      // The difference is reported rather than silently resolved either way.
+      const conflicts = r.items
+        .map((s) => ({ incoming: s, have: byKey.get(key(s)) }))
+        .filter((x) => x.have && x.have.use !== x.incoming.use);
+
+      onChange({
+        ...season,
+        slots: [...season.slots, ...fresh]
+          .sort((a, b) => (a.date + a.start + a.rink).localeCompare(b.date + b.start + b.rink)),
+      });
+      setIssues([
+        ...r.issues,
+        ...conflicts.map((c) => ({
+          row: 0,
+          message: `${c.incoming.date} ${fmtTime(c.incoming.start)} ${c.incoming.rink}: the file says `
+            + `${c.incoming.use}, this season has it as ${c.have!.use}. Kept as `
+            + `${c.have!.use}; it is on the ice differences export.`,
+        })),
+      ]);
+      setNote(`${f.name}: added ${fresh.length} slots`
+        + (dupes ? `, skipped ${dupes} already here` : '')
+        + (conflicts.length ? `, kept ${conflicts.length} of your own changes` : '')
+        + (r.skipped ? `, could not read ${r.skipped} rows` : '') + '.');
+    } catch (e) {
+      setIssues([]);
+      setNote(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  const freeCount = season.slots.filter((s) => !usedSlots.has(s.id)).length;
+  const divName = (id: string) => season.divisions.find((d) => d.id === id)?.name ?? id;
+
+  // ---- standing rules -------------------------------------------------------
+  const setRules = (iceRules: IceRule[]) => onChange({ ...season, iceRules });
+
+  const editRule = (id: string, patch: Partial<IceRule>) =>
+    setRules(season.iceRules.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+
+  const findRules = () => {
+    const found = suggestIceRules(season);
+    // Match on what a rule SELECTS, not on its id. Two rules for Wednesday at
+    // 18:10 are the same rule however they were named, and deduping by id
+    // quietly doubled the table every time this was pressed.
+    const sig = (r: IceRule) =>
+      `${[...r.weekdays].sort().join(',')}|${r.start ?? ''}|${r.rink}|${r.matchUse ?? ''}`;
+    const have = new Set(season.iceRules.map(sig));
+    const fresh = found.filter((r) => !have.has(sig(r)));
+    setRules([...season.iceRules, ...fresh]);
+    setShowRules(true);
+    setNote(fresh.length
+      ? `Found ${fresh.length} weekly patterns in the booked ice. Say who each one belongs to, then apply.`
+      : 'No new weekly patterns found. Every repeating day and time already has a rule.');
+  };
+
+  /** A blank rule, for ice that does not repeat weekly. */
+  const addRule = () => {
+    let n = season.iceRules.length + 1;
+    while (season.iceRules.some((r) => r.id === `rule-${n}`)) n++;
+    setRules([...season.iceRules, {
+      id: `rule-${n}`, weekdays: [], start: null, rink: '', matchUse: null,
+      setUse: null, divisionId: null, policy: 'priority',
+      capacity: 0, practiceTeams: 0, note: 'added by hand',
+    }]);
+    setShowRules(true);
+  };
+
+  const runRules = () => {
+    const { season: next, applied } = applyIceRules(season);
+    onChange(next);
+    const total = applied.reduce((n, a) => n + a.matched, 0);
+    const idle = applied.filter((a) => !a.matched).length;
+    setNote(`Applied ${season.iceRules.length} rules to ${total} slots`
+      + (idle ? `. ${idle} matched nothing — check the day, time and rink.` : '.'));
+  };
+
+  return (
+    <>
+      <h2>Booked ice</h2>
+      <p className="lede">
+        {season.slots.length
+          ? `${season.slots.length} slots, ${freeCount} of them unused`
+            + (moved.length
+              ? `, ${moved.length} being used for something other than what the building booked. `
+              : '. ')
+            + 'Change what a slot is for and every count updates.'
+          : 'No ice yet. Import a Finnly export, or add slots one at a time.'}
+      </p>
+
+      <div className="row">
+        <button className="btn go" onClick={importCsv}>Import ice from CSV</button>
+        <button className="btn line" onClick={add}>Add a slot</button>
+        {season.slots.length > 0 && (
+          <button className="btn line" onClick={() => setShowRules((v) => !v)}>
+            {showRules ? 'Hide' : 'Who gets which ice'}
+            {season.iceRules.length ? ` (${season.iceRules.length})` : ''}
+          </button>
+        )}
+        {season.slots.length > 0 && (
+          <>
+            <div className="field">
+              <label htmlFor="rink">Rink</label>
+              <select id="rink" value={rink} onChange={(e) => setRink(e.target.value)}>
+                <option value="all">All rinks</option>
+                {rinks.map((r) => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="use">Use</label>
+              <select id="use" value={use} onChange={(e) => setUse(e.target.value)}>
+                <option value="all">All</option>
+                {USES.map((u) => <option key={u.v} value={u.v} title={u.hint}>{u.label}</option>)}
+                <option value="repurposed">Used differently from booked</option>
+              </select>
+            </div>
+            <div className="field"><label>&nbsp;</label><span className="muted">{rows.length} shown</span></div>
+          </>
+        )}
+      </div>
+
+      <div ref={rulesRef}>
+      {showRules && (
+        <div className="panel">
+          <h3>Who gets which ice</h3>
+          <p className="lede" style={{ marginBottom: 12 }}>
+            A rink thinks in standing bookings: Wednesday at 18:10 is 8U practice, 7am Sunday is
+            8U games. Set them here once and apply, instead of tagging {season.slots.length} rows
+            by hand and hoping none were missed. Later rules win, so put the broad one first.
+          </p>
+          <div className="row">
+            <button className="btn line" onClick={findRules}>Find the weekly patterns</button>
+            <button className="btn line" onClick={addRule}>Add a rule</button>
+            <button className="btn go" onClick={runRules} disabled={!season.iceRules.length}>
+              Apply to the ice
+            </button>
+            {season.iceRules.length > 0 && (
+              <button className="btn line" onClick={() => {
+                if (confirm('Remove every rule? The slots keep whatever they are set to now.')) setRules([]);
+              }}>Clear rules</button>
+            )}
+          </div>
+          {season.iceRules.length === 0 ? (
+            <p className="muted">
+              No rules yet. <strong>Find the weekly patterns</strong> reads the booked ice and
+              proposes one rule per repeating day and time.
+            </p>
+          ) : (
+            <div className="scroll-x">
+              <table>
+                <thead>
+                  <tr><th>Day</th><th>Start</th><th>Is for</th><th>Reserved for</th>
+                    <th>When the owner is done</th><th className="num">At once</th>
+                    <th className="num">Teams</th><th>Slots</th><th /></tr>
+                </thead>
+                <tbody>
+                  {season.iceRules.map((r) => {
+                    const hits = season.slots.filter((sl) => {
+                      const wd = fmtDay(sl.date).toLowerCase();
+                      return (!r.weekdays.length || r.weekdays.some((d) => d.startsWith(wd)))
+                        && (!r.start || r.start === sl.start)
+                        && (!r.rink || r.rink === sl.rink);
+                    }).length;
+                    return (
+                      <tr key={r.id} title={describeRule(r, divName)}>
+                        <td>
+                          <select value={r.weekdays[0] ?? ''} aria-label={`${r.id} day`}
+                            onChange={(e) => editRule(r.id, {
+                              weekdays: e.target.value ? [e.target.value as Weekday] : [],
+                            })}>
+                            <option value="">Any day</option>
+                            {WEEKDAYS.map((d) => (
+                              <option key={d} value={d}>{d[0]!.toUpperCase() + d.slice(1)}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <input type="time" value={r.start ?? ''} style={{ width: 96 }}
+                            aria-label={`${r.id} start`}
+                            onChange={(e) => editRule(r.id, { start: e.target.value || null })} />
+                        </td>
+                        <td>
+                          <select value={r.setUse ?? ''} aria-label={`${r.id} use`}
+                            onChange={(e) => editRule(r.id, { setUse: (e.target.value || null) as SlotUse | null })}>
+                            <option value="">Leave as is</option>
+                            {USES.map((u) => <option key={u.v} value={u.v} title={u.hint}>{u.label}</option>)}
+                          </select>
+                        </td>
+                        <td>
+                          <select value={r.divisionId ?? ''} aria-label={`${r.id} division`}
+                            onChange={(e) => editRule(r.id, { divisionId: e.target.value || null })}>
+                            <option value="">Anyone</option>
+                            {season.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                          </select>
+                        </td>
+                        <td>
+                          {r.divisionId ? (
+                            <select value={r.policy} aria-label={`${r.id} policy`}
+                              onChange={(e) => editRule(r.id, { policy: e.target.value as OwnerPolicy })}>
+                              <option value="priority">open it to everyone</option>
+                              <option value="exclusive">keep it reserved</option>
+                            </select>
+                          ) : <span className="muted">—</span>}
+                        </td>
+                        <td className="num">
+                          <input type="number" min={0} max={4} className="score" value={r.capacity}
+                            aria-label={`${r.id} games at once`}
+                            onChange={(e) => editRule(r.id, { capacity: Math.max(0, Math.min(4, +e.target.value)) })} />
+                        </td>
+                        <td className="num">
+                          <input type="number" min={0} max={6} className="score" value={r.practiceTeams}
+                            aria-label={`${r.id} teams per practice`}
+                            onChange={(e) => editRule(r.id, { practiceTeams: Math.max(0, Math.min(6, +e.target.value)) })} />
+                        </td>
+                        <td className={hits ? 'muted' : 'flag wrn'}>{hits || 'none'}</td>
+                        <td>
+                          <button className="btn line"
+                            onClick={() => setRules(season.iceRules.filter((x) => x.id !== r.id))}>
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="muted" style={{ marginTop: 10 }}>
+                <strong>At once</strong> is how many games share the sheet; 0 takes it from the
+                division's ice format on Setup.
+                <strong> Teams</strong> is how many share a practice; 0 works it out from the
+                division. Both 0 means leave the slot alone.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+      </div>
+
+      <div ref={noteRef}>{note && <p className="notice">{note}</p>}</div>
+      {issues.length > 0 && (
+        <details className="panel" open={issues.length <= 5}>
+          <summary><strong>{issues.length} rows needed attention</strong></summary>
+          <ul className="problems" style={{ marginTop: 10 }}>
+            {issues.slice(0, 40).map((i, k) => <li key={k}>Row {i.row}: {i.message}</li>)}
+            {issues.length > 40 && <li>and {issues.length - 40} more</li>}
+          </ul>
+        </details>
+      )}
+
+      {season.slots.length === 0 ? (
+        <div className="empty">
+          <p>Export the booked ice from Finnly as CSV and import it here. The columns it needs are
+            a date, a start time and a facility; end time is used for the slot length if present.</p>
+          <p>Or add slots one at a time if you are building a season by hand.</p>
+        </div>
+      ) : (
+        <div className="scroll-x">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Day</th><th>Start</th><th className="num">Mins</th><th>Rink</th>
+                <th>Use</th><th>Reserved for</th><th className="num">Holds</th><th>Booked</th><th />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((s) => {
+                const n = usedSlots.get(s.id) ?? 0;
+                return (
+                  <tr key={s.id}>
+                    <td>
+                      <input type="date" defaultValue={s.date} style={{ width: 138 }}
+                        onBlur={(e) => e.target.value && edit(s.id, { date: e.target.value })} />
+                    </td>
+                    <td className="muted">{fmtDay(s.date)}</td>
+                    <td>
+                      <input type="time" defaultValue={s.start} style={{ width: 96 }}
+                        onBlur={(e) => e.target.value && edit(s.id, { start: e.target.value })} />
+                    </td>
+                    <td className="num">
+                      <input type="number" min={10} step={5} className="score" value={s.minutes}
+                        onChange={(e) => edit(s.id, { minutes: Math.max(10, +e.target.value) })} />
+                    </td>
+                    <td>
+                      <input type="text" defaultValue={s.rink} style={{ width: 110 }}
+                        onBlur={(e) => edit(s.id, { rink: e.target.value.trim() || s.rink })} />
+                    </td>
+                    <td>
+                      <select value={s.use} aria-label={`${s.date} ${fmtTime(s.start)} use`}
+                        onChange={(e) => changeUse(s, e.target.value as SlotUse)}>
+                        {USES.map((u) => <option key={u.v} value={u.v} title={u.hint}>{u.label}</option>)}
+                      </select>
+                      {isRepurposed(s) && (
+                        <button className="pill moved" title={s.repurposeNote
+                          || `Booked as ${s.bookedUse}. Click to put it back.`}
+                          onClick={() => onChange(revertSlot(season, s.id))}>
+                          was {s.bookedUse}
+                        </button>
+                      )}
+                    </td>
+                    <td>
+                      <select value={s.ownerDivisionId ?? ''} aria-label={`${s.date} ${fmtTime(s.start)} reserved for`}
+                        onChange={(e) => edit(s.id, { ownerDivisionId: e.target.value || null })}>
+                        <option value="">Anyone</option>
+                        {season.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                      {s.ownerDivisionId && (
+                        <select value={s.ownerPolicy} style={{ marginLeft: 4 }}
+                          aria-label={`${s.date} ${fmtTime(s.start)} policy`}
+                          onChange={(e) => edit(s.id, { ownerPolicy: e.target.value as OwnerPolicy })}>
+                          <option value="priority">first, then open</option>
+                          <option value="exclusive">only</option>
+                        </select>
+                      )}
+                    </td>
+                    <td className="num">
+                      <input type="number" min={0} max={4} className="score" value={s.capacity}
+                        aria-label={`${s.date} ${fmtTime(s.start)} games at once`}
+                        onChange={(e) => edit(s.id, { capacity: Math.max(0, Math.min(4, +e.target.value)) })} />
+                      {s.capacity === 0 && (() => {
+                        const d = season.divisions.find((x) => x.id === s.ownerDivisionId);
+                        return (
+                          <span className="muted" style={{ marginLeft: 4, fontSize: 'var(--t-xs)' }}
+                            title={d ? `${FORMAT_LABEL[d.iceFormat]} for ${d.name}`
+                              : 'Set by whichever division plays on it'}>
+                            {d ? slotHolds(s, d) : 'auto'}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td>
+                      {n === 0 ? <span className="muted">free</span>
+                        : n > slotHolds(s, season.divisions.find((d) => d.id === s.ownerDivisionId))
+                          && s.use === 'game'
+                          ? <span className="flag err">
+                            over by {n - slotHolds(s, season.divisions.find((d) => d.id === s.ownerDivisionId))}
+                          </span>
+                        : <span className="flag ok">{n}</span>}
+                    </td>
+                    <td><button className="btn line" onClick={() => remove(s.id)}>Remove</button></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+import { useMemo, useState } from 'react';
+import type { Season, Game, LeagueManifest } from '@league/core';
+import {
+  GAME_USES, PLAYOFF_TYPES, REASON_LABELS, describeMove, fmtDate, fmtDay, fmtTime,
+  gameWhen, placementOf, slotHolds,
+  validateSeason, type ChangeReason,
+} from '@league/core';
+import { names } from '../lib/names';
+
+/**
+ * Editing one game. Every change is validated against the whole season before
+ * it is offered, so a move that would break a rule says so before you take it.
+ */
+export function GameEditor(
+  { season, manifest, game, onApply, onClose }:
+  { season: Season; manifest: LeagueManifest; game: Game;
+    onApply: (s: Season) => void; onClose: () => void },
+) {
+  const [mode, setMode] = useState<'home' | 'away'>(game.away ? 'away' : 'home');
+  const nameOf = names(season);
+  const [facility, setFacility] = useState(game.away?.facility ?? '');
+  const [awayDate, setAwayDate] = useState(game.away?.date ?? '');
+  const [awayStart, setAwayStart] = useState(game.away?.start ?? '19:00');
+  const [awayMins, setAwayMins] = useState(game.away?.minutes ?? 60);
+  const [reason, setReason] = useState<ChangeReason>('rink-conflict');
+  const [note, setNote] = useState('');
+
+  const slotById = useMemo(() => new Map(season.slots.map((s) => [s.id, s])), [season]);
+  const name = useMemo(() => new Map(season.teams.map((t) => [t.id, t.name])), [season]);
+  const taken = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const g of season.games) if (g.slotId) m.set(g.slotId, (m.get(g.slotId) ?? 0) + 1);
+    for (const p of season.practices) if (p.teamIds.length) m.set(p.slotId, (m.get(p.slotId) ?? 0) + 1);
+    return m;
+  }, [season]);
+
+  const apply = (patch: Partial<Game>): Season => ({
+    ...season,
+    games: season.games.map((g) => (g.id === game.id ? { ...g, ...patch } : g)),
+  });
+
+  /**
+   * Applying a move also records it. Overwriting where a game used to be, with
+   * no trace, is how "it changed and nobody knows why" happens.
+   */
+  const commit = (next: Season) => {
+    const before = new Map(season.slots.map((s) => [s.id, s]));
+    const after = new Map(next.slots.map((s) => [s.id, s]));
+    const changes = [...next.changes];
+    for (const g of next.games) {
+      const was = season.games.find((x) => x.id === g.id);
+      if (!was) continue;
+      const c = describeMove(g.id, placementOf(was, before), placementOf(g, after), reason, note.trim());
+      if (c) changes.push(c);
+    }
+    onApply({ ...next, changes });
+    setNote('');
+  };
+
+  /** Errors this change would introduce that do not already exist. */
+  const newErrors = (next: Season): string[] => {
+    const before = new Set(validateSeason(season, manifest)
+      .violations.filter((v) => v.severity === 'error').map((v) => v.code + v.message));
+    return validateSeason(next, manifest).violations
+      .filter((v) => v.severity === 'error' && !before.has(v.code + v.message))
+      .map((v) => v.message);
+  };
+
+  /** Trade places with the game already sitting in that slot. */
+  const swapWith = (other: Game): Season => ({
+    ...season,
+    games: season.games.map((g) =>
+      g.id === game.id ? { ...g, slotId: other.slotId, away: null }
+      : g.id === other.id ? { ...other, slotId: game.slotId, away: null }
+      : g),
+  });
+
+  // Every game slot, and what it would cost to go there. A full slot is not a
+  // dead end: on a tight schedule the only useful move is a straight swap.
+  const options = useMemo(() => season.slots
+    .filter((s) => (PLAYOFF_TYPES.has(game.type) ? GAME_USES.has(s.use) : s.use === 'game'))
+    .map((s) => {
+      const current = s.id === game.slotId;
+      const occupied = (taken.get(s.id) ?? 0) - (current ? 1 : 0);
+      const div = season.divisions.find((d) => d.id === game.divisionId);
+      const full = occupied >= slotHolds(s, div);
+      const sitting = season.games.find((g) => g.slotId === s.id && g.id !== game.id);
+      return {
+        slot: s, current, occupied, full, sitting,
+        problems: current ? [] : full ? [] : newErrors(apply({ slotId: s.id, away: null })),
+        swapProblems: current || !full || !sitting || !game.slotId ? ['no swap possible']
+          : sitting.locked ? [`${label(sitting)} is locked.`]
+          : newErrors(swapWith(sitting)),
+      };
+    }), [season, game, taken]);
+
+  function label(g: Game): string {
+    return `${name.get(g.homeTeamId ?? '') ?? g.homeLabel} v ${name.get(g.awayTeamId ?? '') ?? g.awayLabel}`;
+  }
+
+  const free = options.filter((o) => !o.full && !o.problems.length && !o.current);
+  const swappable = options.filter((o) => o.full && !o.swapProblems.length);
+  const when = gameWhen(game, slotById);
+
+  const awayProblems = (): string[] => {
+    if (!facility.trim()) return ['Name the rink this game is played at.'];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(awayDate)) return ['Give the date as YYYY-MM-DD.'];
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(awayStart)) return ['Give the time as HH:MM, 24 hour.'];
+    return newErrors(apply({
+      slotId: null,
+      away: { facility: facility.trim(), city: '', date: awayDate, start: awayStart, minutes: awayMins },
+    }));
+  };
+
+  return (
+    <div className="editor">
+      <div className="editor-head">
+        <div>
+          <strong>{name.get(game.homeTeamId ?? '') ?? game.homeLabel}</strong>
+          {' v '}
+          <strong>{name.get(game.awayTeamId ?? '') ?? game.awayLabel}</strong>
+          <span className="chip div" style={{ marginLeft: 8 }}>{nameOf.division(game.divisionId)}</span>
+        </div>
+        <button className="btn line" onClick={onClose}>Close</button>
+      </div>
+
+      <p className="lede" style={{ marginBottom: 12 }}>
+        {when
+          ? `Currently ${when.away ? 'away at' : 'at'} ${when.rink}, ${fmtDay(when.date)} ${fmtDate(when.date)} at ${fmtTime(when.start)}.`
+          : 'This game has no date yet.'}
+      </p>
+
+      <div className="row">
+        <div className="field">
+          <label htmlFor="why">Why it is moving</label>
+          <select id="why" value={reason} onChange={(e) => setReason(e.target.value as ChangeReason)}>
+            {(Object.keys(REASON_LABELS) as ChangeReason[]).map((k) =>
+              <option key={k} value={k}>{REASON_LABELS[k]}</option>)}
+          </select>
+        </div>
+        <div className="field" style={{ flex: 1, minWidth: 220 }}>
+          <label htmlFor="note">Note for the record</label>
+          <input id="note" type="text" value={note} placeholder="Optional"
+            onChange={(e) => setNote(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="row">
+        <label className="toggle">
+          <input type="checkbox" checked={game.locked}
+            onChange={(e) => onApply(apply({ locked: e.target.checked }))} />
+          Lock this game so generating leaves it alone
+        </label>
+      </div>
+
+      <div className="row">
+        <button className={`btn ${mode === 'home' ? 'go' : 'line'}`}
+          aria-pressed={mode === 'home'} onClick={() => setMode('home')}>Our ice</button>
+        <button className={`btn ${mode === 'away' ? 'go' : 'line'}`}
+          aria-pressed={mode === 'away'} onClick={() => setMode('away')}>Away at another rink</button>
+      </div>
+
+      {mode === 'home' ? (
+        <>
+          <p className="lede" style={{ marginBottom: 10 }}>
+            {free.length} empty {free.length === 1 ? 'slot takes' : 'slots take'} this game, and{' '}
+            {swappable.length} occupied {swappable.length === 1 ? 'slot can' : 'slots can'} trade
+            places with it. Anything else says why not.
+          </p>
+          <div className="scroll-y">
+            <table>
+              <thead>
+                <tr><th>Date</th><th>Day</th><th>Time</th><th>Rink</th><th>Status</th><th /></tr>
+              </thead>
+              <tbody>
+                {options.map((o) => (
+                  <tr key={o.slot.id} className={o.current ? 'is-current' : ''}>
+                    <td>{fmtDate(o.slot.date)}</td>
+                    <td className="muted">{fmtDay(o.slot.date)}</td>
+                    <td>{fmtTime(o.slot.start)}</td>
+                    <td>{o.slot.rink}</td>
+                    <td>
+                      {o.current ? <span className="flag ok">here now</span>
+                        : o.full
+                          ? (o.swapProblems.length
+                              ? <span className="flag err">{o.swapProblems[0]}</span>
+                              : <span className="muted">holds {label(o.sitting!)}</span>)
+                          : o.problems.length
+                            ? <span className="flag err">{o.problems[0]}</span>
+                            : <span className="flag ok">empty</span>}
+                    </td>
+                    <td>
+                      {o.current ? null : o.full ? (
+                        <button className="btn line" disabled={o.swapProblems.length > 0}
+                          onClick={() => { commit(swapWith(o.sitting!)); onClose(); }}>
+                          Swap
+                        </button>
+                      ) : (
+                        <button className="btn line" disabled={o.problems.length > 0}
+                          onClick={() => { commit(apply({ slotId: o.slot.id, away: null })); onClose(); }}>
+                          Move here
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <AwayForm
+          facility={facility} setFacility={setFacility}
+          date={awayDate} setDate={setAwayDate}
+          start={awayStart} setStart={setAwayStart}
+          minutes={awayMins} setMinutes={setAwayMins}
+          problems={awayProblems()}
+          onSave={() => {
+            commit(apply({
+              slotId: null,
+              away: { facility: facility.trim(), city: '', date: awayDate, start: awayStart, minutes: awayMins },
+            }));
+            onClose();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function AwayForm(p: {
+  facility: string; setFacility: (v: string) => void;
+  date: string; setDate: (v: string) => void;
+  start: string; setStart: (v: string) => void;
+  minutes: number; setMinutes: (v: number) => void;
+  problems: string[]; onSave: () => void;
+}) {
+  return (
+    <>
+      <p className="lede" style={{ marginBottom: 12 }}>
+        An away game uses none of our ice, but both teams still count it and stay busy that day.
+      </p>
+      <div className="row">
+        <div className="field">
+          <label htmlFor="fac">Rink</label>
+          <input id="fac" type="text" value={p.facility} style={{ width: 220 }}
+            placeholder="Codey Arena" onChange={(e) => p.setFacility(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="ad">Date</label>
+          <input id="ad" type="date" value={p.date} style={{ width: 150 }}
+            onChange={(e) => p.setDate(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="as">Start</label>
+          {/* A time input, not text: the browser shows it as 6:30 PM and still
+              hands back 18:30, so nobody types a 24-hour clock by hand. */}
+          <input id="as" type="time" value={p.start} style={{ width: 110 }}
+            onChange={(e) => p.setStart(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="am">Minutes</label>
+          <input id="am" type="number" value={p.minutes} style={{ width: 90 }}
+            onChange={(e) => p.setMinutes(Math.max(1, +e.target.value))} />
+        </div>
+      </div>
+      {p.problems.length > 0 && (
+        <ul className="problems">{p.problems.map((x, i) => <li key={i}>{x}</li>)}</ul>
+      )}
+      <button className="btn go" onClick={p.onSave} disabled={p.problems.length > 0}>
+        Save as an away game
+      </button>
+    </>
+  );
+}
+
+import type { Season, LeagueManifest, ValidationResult } from '@league/core';
+import {
+  bracketProgress, fmtDateYear, listDays, playoffGames, readiness, titleCase,
+} from '@league/core';
+import { weekBars } from '../lib/strip';
+
+export function Overview(
+  { season, manifest, result }:
+  { season: Season; manifest: LeagueManifest; result: ValidationResult },
+) {
+  const bars = weekBars(season, manifest.week.startsOn);
+  if (!season.slots.length) {
+    return (
+      <>
+        <h2>{season.name}</h2>
+        <p className="lede">
+          Nothing to show yet. A season needs ice and teams before it can be scheduled.
+        </p>
+        <div className="empty">
+          <p>Start on <strong>Setup</strong> to set the dates and divisions, then
+            <strong> Ice</strong> to import a Finnly export or add slots, then
+            <strong> Teams</strong>.</p>
+        </div>
+      </>
+    );
+  }
+  const peak = Math.max(1, ...bars.map((b) => b.slots));
+  const ready = readiness(season, manifest, result);
+  const bracket = playoffGames(season);
+  const champions = season.divisions
+    .map((d) => ({ d, champion: bracketProgress(season, d.id).champion }))
+    .filter((x) => x.champion);
+  const used = season.games.filter((g) => g.slotId).length;
+  const booked = season.slots.length;
+  const free = booked - new Set(season.games.map((g) => g.slotId)).size;
+
+  return (
+    <>
+      <h2>{fmtDateYear(season.startDate)} to {fmtDateYear(season.endDate)}</h2>
+      <p className="lede">
+        {season.teams.length} teams across {season.divisions.length} divisions.
+        {' '}{booked} slots booked, {used} games placed, {free} slots still free.
+        {bracket.length ? ` ${bracket.length} of those are bracket games.` : ''}
+      </p>
+      {champions.length > 0 && (
+        <p className="notice">
+          {champions.map(({ d, champion }, i) => (
+            <span key={d.id}>{i ? ' · ' : ''}<strong>{champion}</strong> win {d.name}</span>
+          ))}
+        </p>
+      )}
+
+      <section className="strip" aria-label="Ice booked and used, week by week">
+        <div className="track">
+          {bars.map((b) => (
+            <div className="wk" key={b.week} title={`Week of ${b.week}: ${b.games} of ${b.slots} slots used`}>
+              <div className="cap" style={{ height: `${(b.slots / peak) * 100}%` }}>
+                <span className={b.games ? 'fill' : 'fill empty'}
+                  style={{ height: `${b.slots ? (b.games / b.slots) * 100 : 0}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="axis">{bars.map((b) => <span key={b.week}>{b.label}</span>)}</div>
+        <div className="legend">
+          <span><i style={{ background: 'var(--blueline)' }} />Games placed</span>
+          <span><i style={{ background: 'var(--shadow)', outline: '1px solid var(--shadow-deep)' }} />Ice booked and free</span>
+        </div>
+      </section>
+
+      <section className="panel ready">
+        <div className="editor-head">
+          <h3>Ready to publish</h3>
+          <span className={ready.ready ? 'flag ok' : 'flag wrn'}>
+            {ready.percent}% — {ready.met} of {ready.total} checks met
+          </span>
+        </div>
+        <div className="bar-track" aria-label={`${ready.percent} percent ready`}>
+          <span className={ready.ready ? 'fill ok' : 'fill'} style={{ width: `${ready.percent}%` }} />
+        </div>
+        <div className="ready-grid">
+          {[{ divisionId: '', divisionName: 'Season', criteria: ready.league,
+            percent: 0, met: 0, total: 0, ready: false }, ...ready.divisions].map((d) => (
+            <div className="ready-col" key={d.divisionName}>
+              <h4>{d.divisionName}</h4>
+              {d.criteria.map((c) => (
+                <div className={`crit${c.met ? ' met' : ''}`} key={c.id} title={c.detail}>
+                  <i aria-hidden="true">{c.met ? '✓' : '·'}</i>
+                  <span className="k">{c.label}</span>
+                  <span className="d">{c.detail}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        {!ready.ready && (
+          <p className="muted" style={{ margin: '12px 0 0' }}>
+            {ready.blockers.length} thing{ready.blockers.length === 1 ? '' : 's'} left:{' '}
+            {ready.blockers.slice(0, 3).join(' · ')}
+            {ready.blockers.length > 3 ? ' · …' : ''}
+          </p>
+        )}
+      </section>
+
+      <div className="grid3" style={{ marginBottom: 22 }}>
+        <div className={`stat${result.errorCount ? ' bad' : ''}`}>
+          <div className="v">{result.errorCount}</div>
+          <div className="k">{result.errorCount ? 'errors to fix before publishing' : 'errors — safe to publish'}</div>
+        </div>
+        <div className="stat"><div className="v">{result.warningCount}</div><div className="k">warnings to review</div></div>
+        <div className="stat"><div className="v">{free}</div><div className="k">slots you are not using</div></div>
+      </div>
+
+      <div className="panel">
+        <h3>Divisions</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Division</th><th className="num">Teams</th><th className="num">Target</th>
+              <th className="num">Scheduled</th><th className="num">Short</th>
+            </tr>
+          </thead>
+          <tbody>
+            {season.divisions.map((d) => {
+              const ts = result.teams.filter((t) => t.divisionId === d.id);
+              const target = (d.gamesPerTeam ?? manifest.scheduling.defaultGamesPerTeam) * ts.length / 2;
+              const got = ts.reduce((n, t) => n + t.games, 0) / 2;
+              return (
+                <tr key={d.id}>
+                  <td><span className="chip div">{d.name}</span></td>
+                  <td className="num">{ts.length}</td>
+                  <td className="num">{target}</td>
+                  <td className="num">{got}</td>
+                  <td className="num">
+                    {got < target ? <span className="flag wrn">{target - got}</span> : <span className="muted">0</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="panel">
+        <h3>Rules in force</h3>
+        <table>
+          <tbody>
+            <Rule k="Practices" v={manifest.capabilities.practices ? 'Yes' : 'No'} />
+            <Rule k="Week starts" v={titleCase(manifest.week.startsOn)} />
+            <Rule k="Plays on" v={manifest.scheduling.onlyWeekdays.length
+              ? listDays(manifest.scheduling.onlyWeekdays)
+              : manifest.scheduling.blockedWeekdays.length
+                ? `Any day except ${listDays(manifest.scheduling.blockedWeekdays)}`
+                : 'Any day'} />
+            <Rule k="Games per week" v={String(manifest.scheduling.maxGamesPerWeek)} />
+            <Rule k="Same-day doubleheaders" v={manifest.scheduling.allowSameDayDoubleheader ? 'Allowed' : 'Not allowed'} />
+            <Rule k="Play across divisions" v={manifest.scheduling.interDivisionPlay ? 'Allowed' : 'Not allowed'} />
+            <Rule k="Family conflicts" v={manifest.capabilities.familyConstraints ? 'Checked within this league' : 'Not checked'} />
+            <Rule k="League blackout dates" v={season.blackoutDates.length
+              ? season.blackoutDates.map(fmtDateYear).join(', ') : 'None set'} />
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+const Rule = ({ k, v }: { k: string; v: string }) => (
+  <tr><td style={{ width: 220, color: 'var(--ink-soft)' }}>{k}</td><td>{v}</td></tr>
+);
+
+import { useState } from 'react';
+import { Season, MANIFESTS, manifestFor } from '@league/core';
+import { loadSeason } from '@league/io';
+import { readFile } from '../lib/files';
+
+/** What you see before there is anything to work on. Two ways in, not one. */
+export function Start(
+  { onOpen, onProblem }: { onOpen: (s: Season, fileName: string) => void; onProblem: (m: string) => void },
+) {
+  const [mode, setMode] = useState<'choose' | 'new'>('choose');
+  const [leagueId, setLeagueId] = useState(Object.keys(MANIFESTS)[0]!);
+  const [name, setName] = useState('');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [venue, setVenue] = useState('Montclair State University Ice Arena');
+  const [city, setCity] = useState('Little Falls');
+
+  async function open() {
+    const f = await readFile('.json,application/json');
+    if (!f) return;
+    try {
+      const s = loadSeason(f.text);
+      manifestFor(s.leagueId);
+      onOpen(s, f.name);
+    } catch (e) {
+      onProblem(describe(e));
+    }
+  }
+
+  function create() {
+    const problems: string[] = [];
+    if (!name.trim()) problems.push('Give the season a name.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) problems.push('Start date must be YYYY-MM-DD.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(end)) problems.push('End date must be YYYY-MM-DD.');
+    if (start && end && end < start) problems.push('The end date is before the start date.');
+    if (problems.length) { onProblem(problems.join(' ')); return; }
+    const season = Season.parse({
+      id: name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'season',
+      name: name.trim(), leagueId, startDate: start, endDate: end,
+      venue: venue.trim(), city: city.trim(),
+      divisions: [], teams: [], slots: [], games: [], practices: [], people: [], changes: [],
+    });
+    onOpen(season, `${season.id}.season.json`);
+  }
+
+  if (mode === 'new') {
+    return (
+      <>
+        <h2>Start a new season</h2>
+        <p className="lede">
+          This sets the basics. Ice, teams and divisions come next, either from a Finnly export
+          or typed in by hand.
+        </p>
+        <div className="panel" style={{ maxWidth: 560 }}>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label htmlFor="lg">League</label>
+            <select id="lg" value={leagueId} onChange={(e) => setLeagueId(e.target.value)}>
+              {Object.values(MANIFESTS).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+          </div>
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label htmlFor="nm">Season name</label>
+            <input id="nm" type="text" value={name} placeholder="MSU Middle School League 2026-27"
+              onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="row">
+            <div className="field">
+              <label htmlFor="sd">First day</label>
+              <input id="sd" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="ed">Last day</label>
+              <input id="ed" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+            </div>
+          </div>
+          <div className="row">
+            <div className="field" style={{ flex: 1 }}>
+              <label htmlFor="vn">Venue</label>
+              <input id="vn" type="text" value={venue} onChange={(e) => setVenue(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="ct">City</label>
+              <input id="ct" type="text" value={city} onChange={(e) => setCity(e.target.value)} />
+            </div>
+          </div>
+          <div className="row" style={{ marginTop: 6, marginBottom: 0 }}>
+            <button className="btn go" onClick={create}>Create season</button>
+            <button className="btn line" onClick={() => setMode('choose')}>Back</button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h2>Start here</h2>
+      <p className="lede">
+        Everything stays on this computer. Nothing is uploaded, and no account is needed.
+      </p>
+      <div className="grid2">
+        <div className="panel">
+          <h3>Open a season you already have</h3>
+          <p className="lede">
+            A <code>.season.json</code> file saved from this console before.
+          </p>
+          <button className="btn go" onClick={open}>Open season file</button>
+        </div>
+        <div className="panel">
+          <h3>Start a new season</h3>
+          <p className="lede">
+            Name it and set the dates, then bring in ice and teams from a Finnly export or add
+            them by hand.
+          </p>
+          <button className="btn go" onClick={() => setMode('new')}>Start a new season</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function describe(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (msg.includes('Unknown league')) return `${msg}`;
+  if (msg.startsWith('[')) return `That file is not in the season format. ${msg.slice(0, 300)}`;
+  return msg;
+}
+
+import { useState } from 'react';
+import type { Season, Team } from '@league/core';
+import { Team as TeamSchema, Division } from '@league/core';
+import { importTeams, type ImportIssue } from '@league/io';
+import { readFile } from '../lib/files';
+
+export function Teams({ season, onChange }: { season: Season; onChange: (s: Season) => void }) {
+  const [issues, setIssues] = useState<ImportIssue[]>([]);
+  const [note, setNote] = useState('');
+
+  const edit = (id: string, patch: Partial<Team>) =>
+    onChange({ ...season, teams: season.teams.map((t) => (t.id === id ? { ...t, ...patch } : t)) });
+
+  const remove = (id: string) => {
+    const played = season.games.some((g) => g.homeTeamId === id || g.awayTeamId === id);
+    if (played && !confirm('This team has games scheduled. Remove it and them?')) return;
+    onChange({
+      ...season,
+      teams: season.teams.filter((t) => t.id !== id),
+      games: season.games.filter((g) => g.homeTeamId !== id && g.awayTeamId !== id),
+      practices: season.practices.map((p) => ({ ...p, teamIds: p.teamIds.filter((x) => x !== id) })),
+    });
+  };
+
+  const add = () => {
+    if (!season.divisions.length) {
+      setNote('Add a division on the Setup tab first — every team belongs to one.');
+      return;
+    }
+    let n = season.teams.length + 1;
+    let id = `team-${n}`;
+    while (season.teams.some((t) => t.id === id)) id = `team-${++n}`;
+    onChange({
+      ...season,
+      teams: [...season.teams, TeamSchema.parse({
+        id, divisionId: season.divisions[0]!.id, name: `Team ${n}`,
+      })],
+    });
+    setNote('');
+  };
+
+  async function importCsv() {
+    const f = await readFile('.csv,text/csv');
+    if (!f) return;
+    try {
+      const r = importTeams(f.text);
+      const have = new Set(season.teams.map((t) => t.id));
+      const fresh = r.teams.filter((t) => !have.has(t.id));
+      const haveDiv = new Set(season.divisions.map((d) => d.id));
+      const newDivs = r.divisions.filter((d) => !haveDiv.has(d.id))
+        .map((d) => Division.parse({ ...d, gamesPerTeam: null, practicesPerTeam: null }));
+      onChange({
+        ...season,
+        divisions: [...season.divisions, ...newDivs],
+        teams: [...season.teams, ...fresh],
+      });
+      setIssues(r.issues);
+      setNote(`${f.name}: added ${fresh.length} teams` +
+        (newDivs.length ? ` and ${newDivs.length} divisions` : '') +
+        (r.teams.length - fresh.length ? `, skipped ${r.teams.length - fresh.length} already here` : '') +
+        '. Set the game targets on Setup.');
+    } catch (e) {
+      setIssues([]);
+      setNote(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  const setBlackouts = (id: string, raw: string) =>
+    edit(id, { blackoutDates: raw.split(',').map((x) => x.trim()).filter(Boolean) });
+
+  return (
+    <>
+      <h2>Teams</h2>
+      <p className="lede">
+        {season.teams.length
+          ? 'Renaming a team here renames it everywhere, including on exports. Blackout dates are honoured when a schedule is generated, not just reported afterwards.'
+          : 'No teams yet. Import a list, or add them one at a time.'}
+      </p>
+
+      <div className="row">
+        <button className="btn go" onClick={importCsv}>Import teams from CSV</button>
+        <button className="btn line" onClick={add}>Add a team</button>
+        {season.teams.length > 0 &&
+          <div className="field"><label>&nbsp;</label>
+            <span className="muted">{season.teams.length} teams</span></div>}
+      </div>
+
+      {note && <p className="notice">{note}</p>}
+      {issues.length > 0 && (
+        <details className="panel" open={issues.length <= 5}>
+          <summary><strong>{issues.length} rows needed attention</strong></summary>
+          <ul className="problems" style={{ marginTop: 10 }}>
+            {issues.slice(0, 40).map((i, k) => <li key={k}>Row {i.row}: {i.message}</li>)}
+          </ul>
+        </details>
+      )}
+
+      {season.teams.length === 0 ? (
+        <div className="empty">
+          <p>A team list is a CSV with two columns: <strong>Team name</strong> and
+            <strong> Division</strong>. Divisions are created from whatever values appear, so you
+            do not have to set them up first.</p>
+        </div>
+      ) : (
+        <div className="scroll-x">
+          <table>
+            <thead>
+              <tr><th>Team</th><th>Division</th><th>Coach</th><th>Blackout dates</th><th /></tr>
+            </thead>
+            <tbody>
+              {season.teams.map((t) => (
+                <tr key={t.id}>
+                  <td>
+                    <input type="text" defaultValue={t.name} style={{ width: 210 }}
+                      aria-label={`Team ${t.name} name`}
+                      onBlur={(e) => edit(t.id, { name: e.target.value.trim() || t.name })} />
+                  </td>
+                  <td>
+                    <select value={t.divisionId}
+                      onChange={(e) => edit(t.id, { divisionId: e.target.value })}>
+                      {season.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </td>
+                  <td>
+                    <input type="text" defaultValue={t.coach} placeholder="—" style={{ width: 160 }}
+                      onBlur={(e) => edit(t.id, { coach: e.target.value.trim() })} />
+                  </td>
+                  <td>
+                    <input type="text" defaultValue={t.blackoutDates.join(', ')} placeholder="none"
+                      style={{ width: '100%', minWidth: 220 }}
+                      onBlur={(e) => setBlackouts(t.id, e.target.value)} />
+                  </td>
+                  <td><button className="btn line" onClick={() => remove(t.id)}>Remove</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './styles.css';
+import { App } from './App';
+
+createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
+
+import type { Season } from '@league/core';
+
+/**
+ * Ids are for the machine. Names are for people.
+ *
+ * A division's id is whatever the import happened to produce — "D1", "div-3",
+ * a Finnly code — and it has to stay stable, because every game, slot and ice
+ * rule points at it. The name is what the rink calls the thing: "8U". Tom
+ * renamed a division to 8U and the console went on saying D1, because seven
+ * different places reached for `divisionId` when they wanted `name`, and each
+ * of them looked correct on its own.
+ *
+ * So: nothing renders an id. Every view labels a division from here, and one
+ * renamed on the Setup screen is renamed on all of them. The fallback is the
+ * id itself, which only shows up when a game points at something that has
+ * been deleted — and then seeing the dangling id is exactly what you want.
+ */
+export interface Names {
+  division: (id: string | null | undefined) => string;
+  team: (id: string | null | undefined) => string;
+}
+
+export function names(season: Season): Names {
+  const div = new Map(season.divisions.map((d) => [d.id, d.name]));
+  const team = new Map(season.teams.map((t) => [t.id, t.name]));
+  return {
+    division: (id) => (id ? div.get(id) ?? id : ''),
+    team: (id) => (id ? team.get(id) ?? id : ''),
+  };
+}
+
+/** Reading and writing files from the browser. No server, nothing uploaded. */
+
+export function readFile(accept: string): Promise<{ name: string; text: string } | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = () => {
+      const f = input.files?.[0];
+      if (!f) return resolve(null);
+      const r = new FileReader();
+      r.onload = () => resolve({ name: f.name, text: String(r.result) });
+      r.onerror = () => resolve(null);
+      r.readAsText(f);
+    };
+    input.click();
+  });
+}
+
+export function download(name: string, text: string, type = 'text/plain'): void {
+  const url = URL.createObjectURL(new Blob([text], { type: `${type};charset=utf-8` }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+import type { Season } from '@league/core';
+import { weekKey } from '@league/core';
+
+export interface WeekBar { week: string; label: string; slots: number; games: number; }
+
+/** Ice booked against ice used, week by week. The shape of the season. */
+export function weekBars(season: Season, startsOn: Parameters<typeof weekKey>[1]): WeekBar[] {
+  const slotById = new Map(season.slots.map((s) => [s.id, s]));
+  const m = new Map<string, WeekBar>();
+  const touch = (date: string): WeekBar => {
+    const k = weekKey(date, startsOn);
+    const [, mm, dd] = k.split('-') as [string, string, string];
+    return m.get(k) ?? m.set(k, { week: k, label: `${+mm}/${+dd}`, slots: 0, games: 0 }).get(k)!;
+  };
+  for (const s of season.slots) touch(s.date).slots++;
+  for (const g of season.games) {
+    const s = g.slotId ? slotById.get(g.slotId) : undefined;
+    if (s) touch(s.date).games++;
+  }
+  return [...m.values()].sort((a, b) => a.week.localeCompare(b.week));
+}
+
+import { useEffect, useRef, type RefObject } from 'react';
+
+/**
+ * Finding the thing that actually scrolls.
+ *
+ * The window does not scroll in this console: the layout is a fixed header, a
+ * fixed rail and a `.main` that carries `overflow: auto`. So `window.scrollTo`
+ * is a no-op here and `scrollIntoView` has to be aimed at an element inside
+ * that pane. Anything that wants to move the view has to find the real
+ * scroller rather than assume it is the page, which is why this is one helper
+ * instead of a call site each.
+ */
+export function scrollParent(el: Element | null): Element | null {
+  let node: Element | null = el?.parentElement ?? null;
+  while (node) {
+    const style = getComputedStyle(node);
+    const scrolls = /(auto|scroll|overlay)/.test(style.overflowY);
+    if (scrolls && node.scrollHeight > node.clientHeight + 1) return node;
+    node = node.parentElement;
+  }
+  return document.scrollingElement;
+}
+
+/**
+ * Brings a panel into view when it opens.
+ *
+ * The editors on Schedule and Ice are rendered above the list they belong to,
+ * which is right — an editor below a 200-row table would be off the bottom of
+ * the world. But clicking Edit on the last row of that table then changes
+ * something a full screen above where you are looking, and nothing tells you:
+ * Tom's report was that the editing block "pops up at the top of the page" and
+ * he could not see it. So opening one scrolls to it.
+ *
+ * `open` keyed rather than a plain boolean, so clicking Edit on a different
+ * row of an already-open editor scrolls again. Smooth where the browser allows
+ * it, instant where the person has asked for reduced motion.
+ */
+export function useRevealOnOpen(
+  ref: RefObject<HTMLElement | null>, open: string | boolean | null,
+): void {
+  const last = useRef<string | boolean | null>(null);
+  useEffect(() => {
+    if (!open || open === last.current) { last.current = open; return; }
+    last.current = open;
+    const el = ref.current;
+    if (!el) return;
+    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    // A frame's grace so the panel has been laid out and has a real height.
+    const id = requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'nearest' });
+      // Move keyboard focus too, so the person's next Tab starts in the panel
+      // rather than back in the table they were just in.
+      const focusable = el.querySelector<HTMLElement>(
+        'input, select, textarea, button, [tabindex]:not([tabindex="-1"])');
+      focusable?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [ref, open]);
+}
+
+import { useEffect, useState } from 'react';
+import { scrollParent } from './scroll';
+
+/**
+ * Back to the top of whichever tab you are on.
+ *
+ * Every tab in this console is a long list — 120 slots, 130 games, a season of
+ * results — and the controls that act on the list are at the top of it. So the
+ * bottom of a list is a dead end: the only way back is a long scroll or a
+ * keyboard shortcut, and neither is obvious on a phone at the rink.
+ *
+ * Mounted once in the shell rather than per tab, because there is one scroll
+ * pane and one of these is enough. It stays out of the way until there is
+ * something to go back to: hidden at the top, and hidden entirely when the
+ * content is too short to scroll.
+ */
+export function BackToTop({ containerRef }: {
+  containerRef: { current: HTMLElement | null };
+}) {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    // The pane itself scrolls, but keep working if the layout ever changes to
+    // scroll the page instead.
+    const target: Element = el.scrollHeight > el.clientHeight + 1
+      ? el : scrollParent(el) ?? el;
+    const read = () => setShow(target.scrollTop > 400);
+    read();
+    target.addEventListener('scroll', read, { passive: true });
+    // A tab switch replaces the content under the same pane, which is not a
+    // scroll event; watch the size so the button hides on a short tab.
+    const ro = new ResizeObserver(read);
+    ro.observe(target);
+    return () => { target.removeEventListener('scroll', read); ro.disconnect(); };
+  }, [containerRef]);
+
+  const up = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const target: Element = el.scrollHeight > el.clientHeight + 1
+      ? el : scrollParent(el) ?? el;
+    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    target.scrollTo({ top: 0, behavior: calm ? 'auto' : 'smooth' });
+  };
+
+  return (
+    <button type="button" className={`to-top${show ? ' on' : ''}`} onClick={up}
+      aria-hidden={!show} tabIndex={show ? 0 : -1}
+      title="Back to the top of this tab">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+        <path d="M12 5l-7 7h4v7h6v-7h4z" fill="currentColor" />
+      </svg>
+      <span>Top</span>
+    </button>
+  );
+}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MSU Arena — League Operations</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!--
+      This is the DEVELOPMENT page. Vite replaces the script below at build
+      time; served as a static file it loads nothing, because no browser can
+      run TypeScript.
+
+      The content inside #root is a fallback. The app overwrites it the moment
+      it mounts, so nobody running `npm run dev` ever sees it — but if this
+      file is ever uploaded to a web host by mistake, which is easy because the
+      built file is also called index.html, the page says what is wrong instead
+      of going blank and leaving you to guess.
+    -->
+    <div id="root">
+      <div style="max-width:34rem;margin:12vh auto;padding:0 1.5rem;
+                  font:16px/1.6 Archivo,system-ui,sans-serif;color:#16222C">
+        <p style="font-size:12px;font-weight:700;letter-spacing:.08em;
+                  text-transform:uppercase;color:#C8102E;margin:0 0 .5rem">
+          Wrong file
+        </p>
+        <h1 style="font-size:1.6rem;margin:0 0 1rem">This is the development page</h1>
+        <p style="margin:0 0 1rem">
+          It is about 600 bytes and holds no application code — it only works
+          with a development server running. The built console is a single
+          file of roughly 250&nbsp;KB.
+        </p>
+        <p style="margin:0 0 1rem">
+          Run <code style="background:#E4F0F9;padding:.1rem .35rem">npm run build:single</code>
+          and upload the <code style="background:#E4F0F9;padding:.1rem .35rem">dist/index.html</code>
+          it writes, replacing this file.
+        </p>
+        <p style="margin:0;color:#51626F;font-size:14px">
+          Both files are called <code>index.html</code>, which is how this one
+          ends up published by mistake. Uploading the source folder to the same
+          repository as the site will do it every time.
+        </p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'node:url';
+
+export default defineConfig({
+  plugins: [react()],
+  // Relative so the build works from any GitHub Pages path.
+  base: './',
+  resolve: {
+    alias: {
+      react: 'preact/compat',
+      'react-dom': 'preact/compat',
+      'react-dom/client': 'preact/compat/client',
+      'react/jsx-runtime': 'preact/jsx-runtime',
+      '@league/core': fileURLToPath(new URL('../../packages/core/src/index.ts', import.meta.url)),
+      '@league/engine': fileURLToPath(new URL('../../packages/engine/src/index.ts', import.meta.url)),
+      '@league/io': fileURLToPath(new URL('../../packages/io/src/index.ts', import.meta.url)),
+    },
+  },
+  build: { outDir: 'dist', emptyOutDir: true },
+});
+
+{
+  "name": "@league/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@league/core": "0.1.0",
+    "@league/engine": "0.1.0",
+    "@league/io": "0.1.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "preact": "^10.25.4"
+  }
+}
+
+import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+
+const SEASON = new URL('../../../fixtures/mini.season.json', import.meta.url).pathname;
+
+async function openFixture(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.getByRole('button', { name: 'Open season' }).first().click(),
+  ]);
+  await chooser.setFiles(SEASON);
+  await expect(page.getByRole('heading', { level: 2 })).toBeVisible();
+}
+
+test('offers both ways in, not just a file', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Start here' })).toBeVisible();
+  // The console used to be unusable without a season file somebody else made.
+  await expect(page.getByRole('button', { name: 'Open season file' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start a new season' })).toBeVisible();
+  // navigation is unusable until there is something to navigate
+  await expect(page.getByRole('button', { name: 'Schedule', exact: true })).toBeDisabled();
+});
+
+test('opens a season and shows what is in it', async ({ page }) => {
+  await openFixture(page);
+  await expect(page.getByText('Fixture League 2027')).toBeVisible();
+  await expect(page.getByText('4 teams across 1 divisions', { exact: false })).toBeVisible();
+});
+
+test('every view renders without a console error', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  // Script errors are the signal. A blocked font CDN or a missing favicon is
+  // the environment, not the app.
+  const noise = /favicon|Failed to load resource|ERR_TUNNEL|fonts\.(googleapis|gstatic)/;
+  page.on('console', (m) => {
+    if (m.type() === 'error' && !noise.test(m.text())) errors.push(m.text());
+  });
+  await openFixture(page);
+  for (const v of ['Ice', 'Teams', 'Schedule', 'Results', 'Playoffs', 'Checks', 'Export', 'Overview']) {
+    await page.getByRole('button', { name: v, exact: true }).click();
+    await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible();
+  }
+  expect(errors).toEqual([]);
+});
+
+test('the season strip actually draws bars', async ({ page }) => {
+  // This is the regression that shipped once: percentage heights with no basis.
+  await openFixture(page);
+  const bars = page.locator('.strip .cap');
+  await expect(bars.first()).toBeVisible();
+  const h = await bars.first().evaluate((el) => el.getBoundingClientRect().height);
+  expect(h).toBeGreaterThan(10);
+});
+
+test('generates a schedule and the counts land', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+  await expect(page.getByText(/placed/)).toBeVisible({ timeout: 20000 });
+  await page.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Nothing is broken' })).toBeVisible();
+});
+
+test('offers a real move on a full schedule, by swapping', async ({ page }) => {
+  // Every slot in the fixture is taken, so "move" is impossible and the only
+  // useful action is a trade. If this regresses the editor becomes a dead end.
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit' }).first().click();
+  await expect(page.locator('.editor')).toBeVisible();
+  const swaps = page.getByRole('button', { name: 'Swap' });
+  await expect(swaps.first()).toBeEnabled();
+  // The schedule table is the last one on the page; panels sit above it.
+  const sched = page.locator('table').last();
+  const before = await sched.locator('tbody tr').first().textContent();
+  await swaps.first().click();
+  await expect(page.locator('.editor')).toHaveCount(0);
+  expect(await page.locator('table').last().locator('tbody tr').first().textContent())
+    .not.toBe(before);
+  // and the swap left the season legal
+  await page.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /Nothing is broken|problems to fix/ })).toBeVisible();
+});
+
+test('records an away game and keeps it out of the ice count', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit' }).first().click();
+  await page.getByRole('button', { name: 'Away at another rink' }).click();
+  await page.getByLabel('Rink').fill('Codey Arena');
+  await page.getByLabel('Date').fill('2027-01-23');
+  await page.getByLabel('Start').fill('18:00');
+  await page.getByRole('button', { name: 'Save as an away game' }).click();
+  await expect(page.locator('.chip.away').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  // the away game freed a slot back up
+  await expect(page.getByText(/of them unused/)).toBeVisible();
+});
+
+test('works on a phone without horizontal overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openFixture(page);
+  const overflow = await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test('entering a score fills the standings', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  await expect(page.getByText(/0 of 4 regular-season games/)).toBeVisible();
+  const scores = page.locator('input.score');
+  await scores.nth(0).fill('5');
+  await scores.nth(1).fill('2');
+  await expect(page.getByText(/1 of 4 regular-season games/)).toBeVisible();
+  // the winner appears in the standings with points
+  const standings = page.locator('.panel table').last();
+  await expect(standings.getByText('Aces')).toBeVisible();
+  await expect(page.locator('i.fW').first()).toBeVisible();
+});
+
+test('a move is recorded with a reason', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit' }).first().click();
+  await page.getByLabel('Why it is moving').selectOption('ice-failure');
+  await page.getByLabel('Note for the record').fill('Compressor down');
+  await page.getByRole('button', { name: 'Swap' }).first().click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  await expect(page.getByText(/have moved, with the reason recorded|has moved, with the reason recorded/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Download change log CSV' })).toBeEnabled();
+});
+
+test('the public page downloads and carries no player data', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  const [dl] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Download schedule page' }).click(),
+  ]);
+  expect(dl.suggestedFilename()).toMatch(/\.html$/);
+  const path = await dl.path();
+  const { readFileSync } = await import('node:fs');
+  const html = readFileSync(path!, 'utf8');
+  expect(html).toContain('Aces');
+  expect(html).not.toMatch(/https?:\/\//);
+  expect(html).not.toMatch(/<script[^>]+src=/);
+});
+
+const ICE_CSV = new URL('../../../fixtures/sample-ice.csv', import.meta.url).pathname;
+const TEAMS_CSV = new URL('../../../fixtures/sample-teams.csv', import.meta.url).pathname;
+
+test('builds a whole season from nothing but a Finnly CSV', async ({ page }) => {
+  await page.goto('/');
+
+  // 1. start a new season, no file needed
+  await page.getByRole('button', { name: 'Start a new season' }).click();
+  await page.getByLabel('League').selectOption('middle_school');
+  await page.getByLabel('Season name').fill('Test League 2027');
+  await page.getByLabel('First day').fill('2027-01-01');
+  await page.getByLabel('Last day').fill('2027-03-31');
+  await page.getByRole('button', { name: 'Create season' }).click();
+  await expect(page.getByRole('heading', { name: 'Setup' })).toBeVisible();
+
+  // 2. ice from a CSV export
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  await expect(page.getByText('No ice yet', { exact: false })).toBeVisible();
+  const [iceChooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.getByRole('button', { name: 'Import ice from CSV' }).click(),
+  ]);
+  await iceChooser.setFiles(ICE_CSV);
+  await expect(page.getByText(/added \d+ slots/)).toBeVisible();
+
+  // 3. a slot added by hand, which is the other thing a real season needs
+  const before = await page.locator('tbody tr').count();
+  await page.getByRole('button', { name: 'Add a slot' }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(before + 1);
+
+  // 4. teams from a CSV, divisions created from it
+  await page.getByRole('button', { name: 'Teams', exact: true }).click();
+  const [teamChooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.getByRole('button', { name: 'Import teams from CSV' }).click(),
+  ]);
+  await teamChooser.setFiles(TEAMS_CSV);
+  await expect(page.getByText(/added 4 teams/)).toBeVisible();
+
+  // 5. set a game target and schedule it
+  await page.getByRole('button', { name: 'Setup', exact: true }).click();
+  await page.locator('input.score').first().fill('2');
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+  await expect(page.getByText(/placed/)).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('tbody tr').first()).toBeVisible();
+});
+
+
+test('builds a bracket and seeds it off the standings', async ({ page }) => {
+  await openFixture(page);
+
+  // Scores first, so the table has an order to seed from.
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  const scores = page.locator('input.score:not([disabled])');
+  const goals = ['6', '1', '5', '0', '4', '2', '3', '1'];
+  for (let i = 0; i < goals.length; i++) await scores.nth(i).fill(goals[i]!);
+
+  await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+  await page.getByLabel('A playoff teams').selectOption('2');
+  await page.getByRole('button', { name: /Build brackets|Rebuild brackets/ }).click();
+
+  // A seeded final, with real team names rather than "Seed 1".
+  const tie = page.locator('.tie').first();
+  await expect(tie).toBeVisible({ timeout: 20000 });
+  await expect(tie.locator('.side.tbd')).toHaveCount(0);
+  await expect(page.getByText('seeds final')).toBeVisible();
+
+  // and the season is still legal with the bracket in it
+  await page.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByRole('heading', { name: /Nothing is broken|problems to fix/ })).toBeVisible();
+});
+
+test('a bracket game cannot take a score until it has two teams', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+  await page.getByLabel('A playoff teams').selectOption('4');
+  await page.getByRole('button', { name: /Build brackets|Rebuild brackets/ }).click();
+  await expect(page.locator('.tie').first()).toBeVisible({ timeout: 20000 });
+
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  // The final waits on both semifinals, so its score boxes are shut.
+  await expect(page.locator('input.score[disabled]').first()).toBeVisible();
+});
+
+test('a winner advances through the bracket', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+  await page.getByLabel('A playoff teams').selectOption('2');
+  await page.getByRole('button', { name: /Build brackets|Rebuild brackets/ }).click();
+  await expect(page.locator('.tie').first()).toBeVisible({ timeout: 20000 });
+
+  await page.getByRole('button', { name: 'Results', exact: true }).click();
+  const open = page.locator('input.score:not([disabled])');
+  const n = await open.count();
+  await open.nth(n - 2).fill('7');
+  await open.nth(n - 1).fill('2');
+
+  await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+  await expect(page.locator('.tie .side.won')).toHaveCount(1);
+  await expect(page.getByText(/wins it/)).toBeVisible();
+});
+
+test('clearing a bracket gives the ice back', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+  await page.getByLabel('A playoff teams').selectOption('2');
+  await page.getByRole('button', { name: /Build brackets|Rebuild brackets/ }).click();
+  await expect(page.locator('.tie').first()).toBeVisible({ timeout: 20000 });
+  page.on('dialog', (d) => d.accept());
+  await page.getByRole('button', { name: 'Clear brackets' }).click();
+  await expect(page.locator('.tie')).toHaveCount(0);
+  await expect(page.getByText('No brackets yet.')).toBeVisible();
+});
+
+
+test('the team filter follows the division', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  const team = page.getByLabel('Team');
+  const before = await team.locator('option').count();
+  expect(before).toBeGreaterThan(1);
+
+  await page.getByLabel('Division').selectOption('A');
+  // Still every team, because the fixture has one division...
+  await expect(team.locator('option').first()).toHaveText('All A teams');
+
+  // ...so prove the dependency the other way: pick a team, then a division it
+  // is not in, and the stale team filter must clear itself.
+  await page.getByLabel('Division').selectOption('all');
+  const second = await team.locator('option').nth(1).getAttribute('value');
+  await team.selectOption(second!);
+  await expect(team).toHaveValue(second!);
+});
+
+test('shows practices and free ice, and can filter them away', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+
+  // The fixture has a practice slot with four teams on it.
+  await page.getByLabel('Show').selectOption('practice');
+  await expect(page.locator('.chip.kind.prac').first()).toBeVisible();
+
+  // Unused ice is there when asked for, and gone when not.
+  await page.getByLabel('Show').selectOption('all');
+  const withFree = await page.locator('tbody tr').count();
+  await page.getByLabel('Show').selectOption('booked');
+  const booked = await page.locator('tbody tr').count();
+  expect(booked).toBeLessThanOrEqual(withFree);
+
+  await page.getByLabel('Show').selectOption('game');
+  await expect(page.locator('.chip.kind.prac')).toHaveCount(0);
+});
+
+test('generating fills practices, not just games', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+  await expect(page.getByText(/placed/)).toBeVisible({ timeout: 20000 });
+  await page.getByLabel('Show').selectOption('practice');
+  // A House season owes every team practices; the generator used to make none.
+  await expect(page.locator('.chip.kind.prac').first()).toBeVisible();
+});
+
+test('ice rules are visible rather than hidden in the rows', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  await page.getByRole('button', { name: /Who gets which ice/ }).click();
+  // The fixture has no weekly pattern to find, so add the rule by hand.
+  await page.getByRole('button', { name: 'Find the weekly patterns' }).click();
+  await page.getByRole('button', { name: 'Add a rule' }).click();
+  await page.getByLabel('rule-1 day').selectOption('saturday');
+  await page.getByLabel('rule-1 division').selectOption('A');
+  await expect(page.getByRole('button', { name: 'Apply to the ice' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Apply to the ice' }).click();
+  await expect(page.getByText(/Applied \d+ rules to \d+ slots/)).toBeVisible();
+});
+
+test('a slot can be set to evaluation', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  // Row 1 of the fixture has a game on it, so changing it asks twice:
+  // "something is booked here" and then "why".
+  page.on('dialog', (d) => d.accept('moved for evaluations'));
+  await page.locator('tbody tr').first().locator('select').first().selectOption('evaluation');
+  await page.getByLabel('Use', { exact: true }).selectOption('evaluation');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+});
+
+
+test('repurposing a slot is recorded, not a silent edit', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+
+  // The reason is asked for and kept. The first row has a game on it, so the
+  // app checks that too before changing what the ice is for.
+  page.on('dialog', (d) => d.accept('Parents expect this hour'));
+  const row = page.locator('tbody tr').first();
+  await row.locator('select').first().selectOption('evaluation');
+
+  await expect(row.getByRole('button', { name: /^was / })).toBeVisible();
+  await expect(page.getByText(/being used for something other than what the building booked/))
+    .toBeVisible();
+
+  // And it is on the handback to the rink.
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Download ice differences CSV' })).toBeEnabled();
+});
+
+test('a repurposed slot can be put back', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  page.on('dialog', (d) => d.accept('temporary'));
+  const row = page.locator('tbody tr').first();
+  await row.locator('select').first().selectOption('evaluation');
+  await row.getByRole('button', { name: /^was / }).click();
+  await expect(row.getByRole('button', { name: /^was / })).toHaveCount(0);
+});
+
+test('a rules pass leaves a repurposed slot alone', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  page.on('dialog', (d) => d.accept('evals'));
+  const row = page.locator('tbody tr').first();
+  await row.locator('select').first().selectOption('evaluation');
+
+  await page.getByRole('button', { name: /Who gets which ice/ }).click();
+  await page.getByRole('button', { name: 'Add a rule' }).click();
+  await page.getByLabel('rule-1 use').selectOption('game');
+  await page.getByRole('button', { name: 'Apply to the ice' }).click();
+  await expect(page.getByText(/Applied 1 rules/)).toBeVisible();
+
+  // Still an evaluation. The rules panel is above the slots now, so find the
+  // slot table rather than the first row on the page.
+  const slots = page.locator('table').last();
+  await expect(slots.getByRole('button', { name: /^was / })).toBeVisible();
+});
+
+
+test('nothing asks for evaluations until a division does', async ({ page }) => {
+  await openFixture(page);
+  // Zero is the default, so a league that does not run them is never nagged.
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await expect(page.locator('.panel').filter({ hasText: 'Evaluations' })).toHaveCount(0);
+
+  // Tick one division up to a single session and it starts asking.
+  await page.getByRole('button', { name: 'Setup', exact: true }).click();
+  await page.getByLabel('A evaluation sessions').fill('1');
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  const panel = page.locator('.panel').filter({ hasText: 'Evaluations' });
+  await expect(panel.getByText('no evaluation ice')).toBeVisible();
+  await expect(panel.getByText(/0% ready/)).toBeVisible();
+
+  // Mark the ice, and the division's start date follows from it.
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  page.on('dialog', (d) => d.accept('evaluations'));
+  const row = page.locator('table').last().locator('tbody tr').first();
+  await row.locator('select').first().selectOption('evaluation');
+  await row.locator('select').nth(1).selectOption('A');
+
+  // The ice is now marked, so the "no evaluation ice" blocker is gone. In its
+  // place is the ordering rule: the fixture already plays on that date, which
+  // is exactly what evaluations-come-first is there to catch.
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  const after = page.locator('.panel').filter({ hasText: 'Evaluations' });
+  await expect(after.getByText('no evaluation ice')).toHaveCount(0);
+  await expect(after.getByText(/before its last evaluation/)).toBeVisible();
+});
+
+test('the overview says how close the season is to publishable', async ({ page }) => {
+  await openFixture(page);
+  const panel = page.locator('.panel.ready');
+  await expect(panel).toBeVisible();
+  await expect(panel.getByText(/% — \d+ of \d+ checks met/)).toBeVisible();
+  // Each condition says what is done or what is missing, not a rule code.
+  await expect(panel.locator('.crit').first()).toBeVisible();
+});
+
+test('a division cannot be scheduled before it is evaluated', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  page.on('dialog', (d) => d.accept('evaluations'));
+
+  // Turn the LAST slot of the season into the evaluation, so every game would
+  // otherwise fall before it, then regenerate.
+  const rows = page.locator('table').last().locator('tbody tr');
+  const last = rows.nth(await rows.count() - 1);
+  await last.locator('select').first().selectOption('evaluation');
+  await last.locator('select').nth(1).selectOption('A');
+
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+
+  // It refuses to place them rather than placing them before the evaluation,
+  // and offers ice that would fix it.
+  await expect(page.getByText(/games could not be placed/)).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('heading', { name: 'Ice that could fill the gaps' })).toBeVisible();
+
+  // The fixture's playoff final sits on the slot we just turned into the
+  // evaluation, which the checks rightly complain about — that is the rule
+  // working on a contradictory season, not the generator breaking it.
+  await page.getByRole('button', { name: 'Checks', exact: true }).click();
+  await expect(page.getByText(/before its last evaluation/)).toBeVisible();
+});
+
+
+test('a division says how it splits the ice, and the sheet follows', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Setup', exact: true }).click();
+  const fmt = page.getByLabel('A ice format');
+  await expect(fmt).toHaveValue('full');
+  await fmt.selectOption('cross');
+
+  // The Ice tab works the number out rather than making you type it per slot.
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+  const caps = page.locator('table').last().locator('tbody tr').first()
+    .locator('input[type=number]');
+  // Minutes, then games-at-once: the latter is 0, meaning "from the format".
+  await expect(caps.nth(1)).toHaveValue('0');
+});
+
+
+test('two divisions can be paired for crossover, and it writes both ways', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Setup', exact: true }).click();
+
+  // The fixture has one division, so add a second to pair with.
+  await page.getByRole('button', { name: 'Add division' }).click();
+  const rows = page.locator('table').first().locator('tbody tr');
+  await expect(rows).toHaveCount(2);
+
+  // Pairing from one side turns it on for both.
+  const first = rows.nth(0).getByRole('button', { name: 'Division 2' });
+  await expect(first).toHaveAttribute('aria-pressed', 'false');
+  await first.click();
+  await expect(first).toHaveAttribute('aria-pressed', 'true');
+  await expect(rows.nth(1).getByRole('button', { name: 'A' }))
+    .toHaveAttribute('aria-pressed', 'true');
+
+  // And the count only appears once there is somebody to play.
+  await expect(page.getByLabel('A crossover games')).toBeVisible();
+});
+
+test('crossover is refused between different ice formats', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Setup', exact: true }).click();
+  await page.getByRole('button', { name: 'Add division' }).click();
+  const rows = page.locator('table').first().locator('tbody tr');
+  await rows.nth(0).getByLabel('A ice format').selectOption('cross');
+  // One plays cross ice, the other full: a sheet is set up one way at a time.
+  await expect(rows.nth(0).getByRole('button', { name: 'Division 2' })).toBeDisabled();
+});
+
+/* ===========================================================================
+   The four things Tom reported after his test run.
+   ======================================================================== */
+
+test('a renamed division carries through to every tab', async ({ page }) => {
+  // He renamed a division to "u8" and the rest of the console went on calling
+  // it D1, because seven places rendered the id where they wanted the name.
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Setup', exact: true }).click();
+  const name = page.getByLabel('Division A name');
+  await name.fill('8U');
+  await name.blur();
+
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+  await expect(page.getByText('Last run')).toBeVisible();
+  // The chip in the report and the chip on every row of the table.
+  await expect(page.locator('.chip.div').first()).toHaveText('8U');
+  const chips = await page.locator('.chip.div').allInnerTexts();
+  expect(chips.length).toBeGreaterThan(1);
+  expect(chips.every((c) => c === '8U')).toBe(true);
+
+  // And on the tabs that show a division without being asked to.
+  for (const v of ['Results', 'Checks']) {
+    await page.getByRole('button', { name: v, exact: true }).click();
+    const seen = await page.locator('.chip.div').allInnerTexts();
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every((c) => c === '8U')).toBe(true);
+  }
+});
+
+test('a renamed team carries through', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Teams', exact: true }).click();
+  const name = page.getByLabel('Team Aces name');
+  await name.fill('Thunder');
+  await name.blur();
+
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+  await expect(page.getByText('Last run')).toBeVisible();
+  await expect(page.locator('table').last()).toContainText('Thunder');
+  await expect(page.locator('table').last()).not.toContainText('Aces');
+});
+
+test('times read as 12-hour with AM and PM, never 18:30', async ({ page }) => {
+  // The fixture has an 18:30 slot and a 20:00 slot on purpose.
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+  await expect(page.getByText('Last run')).toBeVisible();
+
+  const table = page.locator('table').last();
+  await expect(table).toContainText('6:30 PM');
+  await expect(table).not.toContainText('18:30');
+  await expect(table).not.toContainText('20:00');
+
+  // Every cell in the Time column, not just the one we went looking for.
+  const times = await table.locator('tbody tr td:nth-child(4)').allInnerTexts();
+  expect(times.length).toBeGreaterThan(0);
+  for (const t of times) expect(t.trim()).toMatch(/^\d{1,2}:\d{2} [AP]M$/);
+});
+
+test('the back-to-top button appears once there is something to scroll past',
+  async ({ page }) => {
+    await openFixture(page);
+    const btn = page.locator('.to-top');
+    // Hidden at the top of a tab, and hidden on a tab too short to scroll.
+    await expect(btn).toHaveClass(/^((?!\bon\b).)*$/);
+
+    await page.getByRole('button', { name: 'Ice', exact: true }).click();
+    const main = page.locator('.main');
+    await main.evaluate((el) => { el.scrollTop = 1200; });
+    // Only shows if this tab is actually long enough to have scrolled.
+    const scrolled = await main.evaluate((el) => el.scrollTop);
+    if (scrolled > 400) {
+      await expect(btn).toHaveClass(/\bon\b/);
+      await btn.click();
+      await expect.poll(() => main.evaluate((el) => el.scrollTop)).toBeLessThan(5);
+    }
+  });
+
+test('opening the editor from the bottom of the schedule scrolls to it', async ({ page }) => {
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+  await expect(page.getByText('Last run')).toBeVisible();
+
+  const main = page.locator('.main');
+  // Go to the bottom and edit the last game, which is where the editor opening
+  // silently at the top was invisible.
+  await main.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+  const before = await main.evaluate((el) => el.scrollTop);
+  await page.locator('table').last().locator('tbody tr').last()
+    .getByRole('button', { name: 'Edit' }).click();
+
+  const editor = page.locator('.editor');
+  await expect(editor).toBeVisible();
+  // In view, not merely in the document.
+  await expect.poll(async () => {
+    const box = await editor.boundingBox();
+    const pane = await main.boundingBox();
+    if (!box || !pane) return false;
+    return box.y + box.height > pane.y && box.y < pane.y + pane.height;
+  }).toBe(true);
+  // On a long tab it must actually have moved. The fixture's schedule is short
+  // enough to fit in one screen, where the right answer is to move nothing, so
+  // only hold it to that when there was a real scroll to undo.
+  if (before > 200) {
+    expect(await main.evaluate((el) => el.scrollTop)).toBeLessThan(before);
+  }
+});
+
+test('the generator holds ice back for the playoffs', async ({ page }) => {
+  // The bug: the regular season ran to the last night of booked ice and the
+  // brackets got none of it. The report now says what was held back, so the
+  // shortfall is visible on Schedule instead of being discovered on Playoffs.
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByRole('button', { name: /Generate/ }).click();
+  await expect(page.getByText('Last run')).toBeVisible();
+  const panel = page.locator('.panel', { hasText: 'Last run' });
+  await expect(panel).toContainText('Playoff ice');
+  await expect(panel).toContainText(/night(s)? held back/);
+
+  // And the bracket finds that ice. The fixture books six slots in total, so
+  // it is a 2-team final that fits here, not a four-team bracket — the
+  // ample-ice case is covered in packages/engine/test/playoffIce.test.ts.
+  await page.getByRole('button', { name: 'Playoffs', exact: true }).click();
+  await page.getByLabel('A playoff teams').selectOption('2');
+  await page.getByRole('button', { name: /Build brackets|Rebuild brackets/ }).click();
+  await expect(page.locator('.tie').first()).toBeVisible({ timeout: 20000 });
+  await expect(page.locator('.main')).not.toContainText('have no ice');
+});
+
+test('ice can be marked for the playoffs from the Booked Ice tab', async ({ page }) => {
+  // Tom's lever for setting where the regular season ends: mark the late
+  // sheets, and the rest of the season has to fit in front of them.
+  // Changing what a sheet is for asks why, so answer the way a person would.
+  page.on('dialog', (d) => d.accept(d.type() === 'prompt' ? 'playoff weekend' : ''));
+  await openFixture(page);
+  await page.getByRole('button', { name: 'Ice', exact: true }).click();
+
+  const before = await page.locator('select[aria-label$="use"]').count();
+  expect(before).toBeGreaterThan(1);
+
+  // A fresh sheet with nothing on it, dated to the season start, which puts
+  // it at the top of a list kept in date order.
+  await page.getByRole('button', { name: 'Add a slot' }).click();
+  const useSelect = page.locator('select[aria-label$="use"]').first();
+  await useSelect.selectOption('playoff');
+  await expect(useSelect).toHaveValue('playoff');
+
+  // The use filter finds it, and only it.
+  await page.getByLabel('Use', { exact: true }).selectOption('playoff');
+  await expect(page.locator('select[aria-label$="use"]')).toHaveCount(1);
+  await page.getByLabel('Use', { exact: true }).selectOption('all');
+
+  // And the schedule says what that sheet is for rather than calling it free.
+  await page.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await page.getByLabel('Show').selectOption('all');
+  await expect(page.locator('table').last()).toContainText('held for the playoffs');
+});
+
+import { defineConfig } from '@playwright/test';
+
+/**
+ * CI installs its own browser, so nothing is pinned there. A sandbox with a
+ * preinstalled Chromium sets PW_CHROMIUM to that binary instead of downloading
+ * one that will not match.
+ */
+const executablePath = process.env.PW_CHROMIUM || undefined;
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? 'github' : 'list',
+  use: { baseURL: 'http://127.0.0.1:4173', trace: 'on-first-retry' },
+  webServer: {
+    command: 'npm run preview -- --port 4173 --strictPort',
+    url: 'http://127.0.0.1:4173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 60_000,
+  },
+  projects: [{
+    name: 'chromium',
+    use: { browserName: 'chromium', launchOptions: { executablePath } },
+  }],
+});
+
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "paths": {
+      "@league/core": ["../../packages/core/src/index.ts"],
+      "@league/engine": ["../../packages/engine/src/index.ts"],
+      "@league/io": ["../../packages/io/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
+}
