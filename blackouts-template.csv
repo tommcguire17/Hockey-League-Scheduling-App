@@ -1,0 +1,9 @@
+Date,Reason
+# Put one league-wide no-play date per row. Lines starting with # are ignored.
+# Date accepts 2027-02-15, 2/15/2027 or 2/15/27.
+# Per-team blackouts go in the team list instead, not here.
+#
+# 2026-12-24,Christmas Eve
+# 2026-12-25,Christmas Day
+# 2027-01-18,MLK Day
+# 2027-02-15,Presidents Day

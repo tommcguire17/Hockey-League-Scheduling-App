@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture-mini",
+  "name": "Fixture League 2027",
+  "leagueId": "house",
+  "startDate": "2027-01-04",
+  "endDate": "2027-02-28",
+  "venue": "Example Ice Center",
+  "city": "Exampleton",
+  "divisions": [
+    { "id": "A", "name": "A", "gamesPerTeam": 2, "practicesPerTeam": 1, "playoffTeams": 2 }
+  ],
+  "teams": [
+    { "id": "A-1", "divisionId": "A", "name": "Aces" },
+    { "id": "A-2", "divisionId": "A", "name": "Barons" },
+    { "id": "A-3", "divisionId": "A", "name": "Comets" },
+    { "id": "A-4", "divisionId": "A", "name": "Drakes" }
+  ],
+  "slots": [
+    { "id": "s1", "date": "2027-01-09", "start": "09:00", "minutes": 60, "rink": "North", "use": "game" },
+    { "id": "s2", "date": "2027-01-09", "start": "13:00", "minutes": 60, "rink": "South", "use": "game" },
+    { "id": "s3", "date": "2027-01-16", "start": "18:30", "minutes": 60, "rink": "North", "use": "game" },
+    { "id": "s4", "date": "2027-01-16", "start": "20:00", "minutes": 60, "rink": "South", "use": "game" },
+    { "id": "s5", "date": "2027-01-20", "start": "17:30", "minutes": 60, "rink": "North", "use": "practice", "practiceTeams": 4 },
+    { "id": "s6", "date": "2027-02-20", "start": "12:00", "minutes": 60, "rink": "North", "use": "game" }
+  ],
+  "games": [
+    { "id": "g1", "divisionId": "A", "slotId": "s1", "homeTeamId": "A-1", "awayTeamId": "A-2", "type": "regular" },
+    { "id": "g2", "divisionId": "A", "slotId": "s2", "homeTeamId": "A-3", "awayTeamId": "A-4", "type": "regular" },
+    { "id": "g3", "divisionId": "A", "slotId": "s3", "homeTeamId": "A-1", "awayTeamId": "A-3", "type": "regular" },
+    { "id": "g4", "divisionId": "A", "slotId": "s4", "homeTeamId": "A-2", "awayTeamId": "A-4", "type": "regular" },
+    { "id": "g5", "divisionId": "A", "slotId": "s6", "homeTeamId": null, "awayTeamId": null,
+      "homeLabel": "Seed 1", "awayLabel": "Seed 2", "type": "final" }
+  ],
+  "practices": [
+    { "id": "pr1", "divisionId": "A", "slotId": "s5", "teamIds": ["A-1", "A-2", "A-3", "A-4"] }
+  ],
+  "people": []
+}
