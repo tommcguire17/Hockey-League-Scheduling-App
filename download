@@ -1,0 +1,30 @@
+# ---------------------------------------------------------------------------
+# PLAYER DATA NEVER ENTERS THIS REPOSITORY.
+# Rosters hold minors' names, birthdates and parent email addresses. Anything
+# bundled with a static site is public, so real season data stays on disk only.
+# ---------------------------------------------------------------------------
+data/*
+!data/.gitkeep
+*.season.json
+*.roster.json
+*.private.*
+/exports/
+/uploads/
+
+# Real source exports dropped in for import
+*Finnly*.csv
+*Finnly*.xlsx
+*Responses*.csv
+*Responses*.xlsx
+*Registration*.csv
+*Roster*.csv
+
+node_modules/
+dist/
+apps/web/test-results/
+apps/web/playwright-report/
+*.tsbuildinfo
+coverage/
+.DS_Store
+.env
+.env.*
